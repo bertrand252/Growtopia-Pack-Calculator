@@ -27,9 +27,9 @@ const PACKS = {
     icon: "assets/items/crimewave.png",
     items: [
       { name: "Crime Wave", qty: 1, icon: "assets/items/crimewave.png" },
-      { name: "Superpower Card (random)", qty: 25, icon: "assets/items/superpowercard.png" },
     ],
     locked: true,
+    cardsPerPack: 25, // 5 random Superpower Cards x5 tiap pack, isi manual di bawah
   },
   gala: {
     label: "Galactic Goodies",
@@ -62,6 +62,50 @@ const tabsEl = document.getElementById("tabs");
 const gridEl = document.getElementById("itemGrid");
 const priceWlEl = document.getElementById("priceWl");
 const qtyPackEl = document.getElementById("qtyPack");
+const cardDeckSection = document.getElementById("cardDeckSection");
+const cardCategoriesEl = document.getElementById("cardCategories");
+const cardCheckStatus = document.getElementById("cardCheckStatus");
+
+// 20 kemungkinan Superpower Card (data: growtopia-tools.vercel.app/Crime).
+// Tiap pack dapat 5 acak dari sini, 5 masing-masing = 25 kartu.
+const CARD_CATALOG = {
+  Fire: [
+    { name: "Heat Vision", icon: "assets/items/cards/heat_vision.png" },
+    { name: "Incinerate", icon: "assets/items/cards/incinerate.png" },
+    { name: "Flame On!", icon: "assets/items/cards/flame_on.png" },
+    { name: "Liquify", icon: "assets/items/cards/liquify.png" },
+    { name: "Overheat", icon: "assets/items/cards/overheat.png" },
+  ],
+  Ice: [
+    { name: "Ice Shards", icon: "assets/items/cards/ice_shards.png" },
+    { name: "Frost Breath", icon: "assets/items/cards/frost_breath.png" },
+    { name: "Ice Barrier", icon: "assets/items/cards/ice_barrier.png" },
+    { name: "Puddle", icon: "assets/items/cards/puddle.png" },
+    { name: "Frozen Mirror", icon: "assets/items/cards/frozen_mirror.png" },
+  ],
+  Muscle: [
+    { name: "Super Strength", icon: "assets/items/cards/super_strength.png" },
+    { name: "Super Speed", icon: "assets/items/cards/super_speed.png" },
+    { name: "Enrage", icon: "assets/items/cards/enrage.png" },
+    { name: "Crush", icon: "assets/items/cards/crush.png" },
+    { name: "Regeneration", icon: "assets/items/cards/regeneration.png" },
+  ],
+  Lightning: [
+    { name: "Shocking Fist", icon: "assets/items/cards/shocking_fist.png" },
+    { name: "Thunderstorm", icon: "assets/items/cards/thunderstorm.png" },
+    { name: "Overcharge", icon: "assets/items/cards/overcharge.png" },
+    { name: "Megawatt Pulse", icon: "assets/items/cards/megawatt_pulse.png" },
+    { name: "Resuscitate", icon: "assets/items/cards/resuscitate.png" },
+  ],
+};
+
+// isian manual per kartu (qty didapat + rate jual), keyed by nama kartu
+const cardQty = {};
+const cardRate = {};
+Object.values(CARD_CATALOG).flat().forEach((c) => {
+  cardQty[c.name] = 0;
+  cardRate[c.name] = { n: 0, mode: "item_per_wl" };
+});
 
 const LOCK_ICON = { bgl: "assets/locks/bgl.png", dl: "assets/locks/dl.png", wl: "assets/locks/wl.png" };
 
@@ -97,8 +141,88 @@ function renderTabs() {
   });
 }
 
+function renderCardRows() {
+  const qtyPack = Number(qtyPackEl.value) || 0;
+
+  cardCategoriesEl.innerHTML = "";
+  Object.keys(CARD_CATALOG).forEach((category) => {
+    const section = document.createElement("div");
+    section.className = "section";
+    section.innerHTML = `<h3 class="section-title">${category}</h3><div class="cards-grid"></div>`;
+    const grid = section.querySelector(".cards-grid");
+
+    CARD_CATALOG[category].forEach((card) => {
+      const qty = cardQty[card.name];
+      const rate = cardRate[card.name];
+      const isWlMode = rate.mode === "wl_per_item";
+      const leftUnit = isWlMode ? "item" : "wl";
+      const rightUnit = isWlMode ? "wl" : "item";
+      const totalQty = qty * qtyPack;
+      const el = document.createElement("div");
+      el.className = "item-card";
+      el.innerHTML = `
+        <div class="item-head">
+          <img class="item-icon" src="${card.icon}" alt="" />
+          <div class="item-info">
+            <div class="item-name-static">${card.name}</div>
+            <p class="item-total" data-card-total="${card.name}">${totalQty.toLocaleString("id-ID")} total</p>
+          </div>
+        </div>
+        <div class="item-body">
+          <label class="item-label">Qty didapat (per pack)</label>
+          <input type="number" min="0" class="card-qty" data-card="${card.name}" value="${qty}" />
+          <div class="raterow">
+            <span class="unit">1 ${leftUnit} =</span>
+            <input type="number" min="0" class="card-rate-n" data-card="${card.name}" value="${rate.n}" />
+            <span class="unit">${rightUnit}</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" class="card-rate-mode" data-card="${card.name}" ${isWlMode ? "checked" : ""} />
+            <span class="slider"></span>
+          </label>
+        </div>
+      `;
+      grid.appendChild(el);
+    });
+
+    cardCategoriesEl.appendChild(section);
+  });
+
+  cardCategoriesEl.querySelectorAll(".card-qty").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      cardQty[e.target.dataset.card] = Number(e.target.value) || 0;
+      compute();
+      updateCardCheckStatus();
+    });
+  });
+  cardCategoriesEl.querySelectorAll(".card-rate-n").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      cardRate[e.target.dataset.card].n = Number(e.target.value) || 0;
+      compute();
+    });
+  });
+  cardCategoriesEl.querySelectorAll(".card-rate-mode").forEach((inp) => {
+    inp.addEventListener("change", (e) => {
+      cardRate[e.target.dataset.card].mode = e.target.checked ? "wl_per_item" : "item_per_wl";
+      renderCardRows();
+      compute();
+    });
+  });
+
+  updateCardCheckStatus();
+}
+
+function updateCardCheckStatus() {
+  const total = Object.values(cardQty).reduce((sum, q) => sum + (Number(q) || 0), 0);
+  const target = PACKS.crime.cardsPerPack;
+  cardCheckStatus.textContent = total === target ? `✓ ${total}/${target} kartu` : `⚠ ${total}/${target} kartu — cek lagi`;
+  cardCheckStatus.className = "card-check " + (total === target ? "ok" : "bad");
+}
+
 function renderGrid() {
   const pack = PACKS[activePack];
+  cardDeckSection.hidden = activePack !== "crime";
+  if (activePack === "crime") renderCardRows();
   gridEl.innerHTML = "";
   pack.items.forEach((item, idx) => {
     const el = document.createElement("div");
@@ -186,6 +310,15 @@ function compute() {
     const totalEl = gridEl.querySelector(`[data-total-idx="${idx}"]`);
     if (totalEl) totalEl.textContent = `total tools: ${totalQty.toLocaleString("id-ID")} (senilai ${itemRevenue.toLocaleString("id-ID")} WL)`;
   });
+
+  if (activePack === "crime") {
+    Object.values(CARD_CATALOG).flat().forEach((card) => {
+      const totalQty = (Number(cardQty[card.name]) || 0) * qtyPack;
+      totalRevenue += totalQty * pricePerItem(cardRate[card.name]);
+      const totalEl = cardCategoriesEl.querySelector(`[data-card-total="${card.name}"]`);
+      if (totalEl) totalEl.textContent = `${totalQty.toLocaleString("id-ID")} total`;
+    });
+  }
 
   document.getElementById("totalRevenue").textContent = totalRevenue.toLocaleString("id-ID") + " WL";
   document.getElementById("totalRevenueLockline").innerHTML = formatLocks(totalRevenue);
