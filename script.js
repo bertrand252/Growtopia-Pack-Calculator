@@ -183,8 +183,9 @@ function compute() {
 
   const profit = totalRevenue - totalModal;
   const profitEl = document.getElementById("totalProfit");
-  profitEl.textContent = (profit >= 0 ? "+" : "") + profit.toLocaleString("id-ID") + " WL";
+  profitEl.textContent = (profit >= 0 ? "+" : "-") + Math.abs(profit).toLocaleString("id-ID") + " WL";
   profitEl.className = "value " + (profit >= 0 ? "pos" : "neg");
+  document.getElementById("totalProfitLockline").innerHTML = formatLocks(Math.abs(profit));
 }
 
 priceWlEl.addEventListener("input", compute);
