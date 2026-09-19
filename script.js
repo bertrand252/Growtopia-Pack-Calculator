@@ -1,0 +1,208 @@
+// ponytail: item qty untuk crime & gala belum ada data pasti dari wiki, jadi dibiarkan
+// kosong + editable. isi manual sesuai pack asli in-game biar akurat.
+const PACKS = {
+  msurg: {
+    label: "MSurg",
+    items: [
+      { name: "Surg-E", qty: 5 },
+      { name: "Surgical Anesthetic", qty: 20 },
+      { name: "Surgical Antibiotics", qty: 20 },
+      { name: "Surgical Antiseptic", qty: 20 },
+      { name: "Surgical Clamp", qty: 20 },
+      { name: "Surgical Defibrillator", qty: 20 },
+      { name: "Surgical Lab Kit", qty: 20 },
+      { name: "Surgical Pins", qty: 20 },
+      { name: "Surgical Scalpel", qty: 20 },
+      { name: "Surgical Splint", qty: 20 },
+      { name: "Surgical Sponge", qty: 20 },
+      { name: "Surgical Stitches", qty: 20 },
+      { name: "Surgical Transfusion", qty: 20 },
+      { name: "Surgical Ultrasound", qty: 20 },
+    ],
+    locked: true,
+  },
+  crime: {
+    label: "Crime",
+    items: [
+      { name: "Item 1", qty: 0 },
+      { name: "Item 2", qty: 0 },
+      { name: "Item 3", qty: 0 },
+      { name: "Item 4", qty: 0 },
+      { name: "Item 5", qty: 0 },
+    ],
+    locked: false,
+  },
+  gala: {
+    label: "Gala",
+    items: [
+      { name: "Item 1", qty: 0 },
+      { name: "Item 2", qty: 0 },
+      { name: "Item 3", qty: 0 },
+      { name: "Item 4", qty: 0 },
+      { name: "Item 5", qty: 0 },
+    ],
+    locked: false,
+  },
+};
+
+let activePack = "msurg";
+// rate jual per item diinget per-pack biar ga ilang pas pindah tab
+// rate = { a, b, mode } -> mode "item_per_wl": a item = b wl | mode "wl_per_item": a wl = b item
+const sellRates = { msurg: {}, crime: {}, gala: {} };
+
+const tabsEl = document.getElementById("tabs");
+const gridEl = document.getElementById("itemGrid");
+const priceWlEl = document.getElementById("priceWl");
+const qtyPackEl = document.getElementById("qtyPack");
+
+function formatLocks(totalWl) {
+  totalWl = Math.max(0, Math.round(totalWl));
+  const bgl = Math.floor(totalWl / 10000);
+  const dl = Math.floor((totalWl % 10000) / 100);
+  const wl = totalWl % 100;
+  const parts = [];
+  if (bgl > 0) parts.push(`<span class="badge"><span class="dot bgl"></span>${bgl} BGL</span>`);
+  if (dl > 0) parts.push(`<span class="badge"><span class="dot dl"></span>${dl} DL</span>`);
+  parts.push(`<span class="badge"><span class="dot wl"></span>${wl} WL</span>`);
+  return parts.join(" ");
+}
+
+// harga per 1 item dalam WL, dari rate a/b + mode
+function pricePerItem(rate) {
+  if (!rate) return 0;
+  const a = Number(rate.a) || 0;
+  const b = Number(rate.b) || 0;
+  if (rate.mode === "wl_per_item") {
+    // a wl = b item
+    return b > 0 ? a / b : 0;
+  }
+  // default: item_per_wl -> a item = b wl
+  return a > 0 ? b / a : 0;
+}
+
+function renderTabs() {
+  tabsEl.innerHTML = "";
+  Object.keys(PACKS).forEach((key) => {
+    const btn = document.createElement("div");
+    btn.className = "tab" + (key === activePack ? " active" : "");
+    btn.textContent = PACKS[key].label;
+    btn.onclick = () => { activePack = key; renderTabs(); renderGrid(); };
+    tabsEl.appendChild(btn);
+  });
+}
+
+function renderGrid() {
+  const pack = PACKS[activePack];
+  gridEl.innerHTML = "";
+  pack.items.forEach((item, idx) => {
+    const el = document.createElement("div");
+    el.className = "item";
+    const rateKey = item.name + "#" + idx;
+    const rate = sellRates[activePack][rateKey] || { a: 0, b: 0, mode: "item_per_wl" };
+    const isWlMode = rate.mode === "wl_per_item";
+    el.innerHTML = `
+      <div class="item-head">
+        <div class="item-icon">🧰</div>
+        <input class="item-name" value="${item.name}" ${pack.locked ? "readonly" : ""} data-idx="${idx}" />
+      </div>
+      <div class="item-body">
+        <div class="qtyrow">
+          <span>qty/pack:</span>
+          <input type="number" min="0" class="qty-input" data-idx="${idx}" value="${item.qty}" ${pack.locked ? "readonly" : ""} />
+        </div>
+        <div class="raterow">
+          <input type="number" min="0" class="rate-a" data-idx="${idx}" value="${rate.a}" />
+          <span class="slash">/</span>
+          <input type="number" min="0" class="rate-b" data-idx="${idx}" value="${rate.b}" />
+        </div>
+        <div class="switchwrap">
+          <span class="${!isWlMode ? "active" : ""}">item/wl</span>
+          <label class="switch">
+            <input type="checkbox" class="rate-mode" data-idx="${idx}" ${isWlMode ? "checked" : ""} />
+            <span class="slider"></span>
+          </label>
+          <span class="${isWlMode ? "active" : ""}">wl/item</span>
+        </div>
+        <div class="total" data-total-idx="${idx}">total: 0</div>
+      </div>
+    `;
+    gridEl.appendChild(el);
+  });
+
+  gridEl.querySelectorAll(".item-name").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      PACKS[activePack].items[e.target.dataset.idx].name = e.target.value;
+    });
+  });
+  gridEl.querySelectorAll(".qty-input").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      PACKS[activePack].items[e.target.dataset.idx].qty = Number(e.target.value) || 0;
+      compute();
+    });
+  });
+
+  function getOrCreateRate(idx) {
+    const item = PACKS[activePack].items[idx];
+    const key = item.name + "#" + idx;
+    if (!sellRates[activePack][key]) sellRates[activePack][key] = { a: 0, b: 0, mode: "item_per_wl" };
+    return sellRates[activePack][key];
+  }
+
+  gridEl.querySelectorAll(".rate-a").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      getOrCreateRate(e.target.dataset.idx).a = Number(e.target.value) || 0;
+      compute();
+    });
+  });
+  gridEl.querySelectorAll(".rate-b").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      getOrCreateRate(e.target.dataset.idx).b = Number(e.target.value) || 0;
+      compute();
+    });
+  });
+  gridEl.querySelectorAll(".rate-mode").forEach((inp) => {
+    inp.addEventListener("change", (e) => {
+      getOrCreateRate(e.target.dataset.idx).mode = e.target.checked ? "wl_per_item" : "item_per_wl";
+      renderGrid();
+    });
+  });
+
+  compute();
+}
+
+function compute() {
+  const pack = PACKS[activePack];
+  const priceWl = Number(priceWlEl.value) || 0;
+  const qtyPack = Number(qtyPackEl.value) || 0;
+  const totalModal = priceWl * qtyPack;
+
+  document.getElementById("priceLockline").innerHTML = formatLocks(priceWl);
+  document.getElementById("totalModal").textContent = totalModal.toLocaleString("id-ID") + " WL";
+  document.getElementById("totalModalLockline").innerHTML = formatLocks(totalModal);
+
+  let totalRevenue = 0;
+  pack.items.forEach((item, idx) => {
+    const totalQty = item.qty * qtyPack;
+    const rateKey = item.name + "#" + idx;
+    const rate = sellRates[activePack][rateKey];
+    const perItem = pricePerItem(rate);
+    const itemRevenue = totalQty * perItem;
+    totalRevenue += itemRevenue;
+    const totalEl = gridEl.querySelector(`[data-total-idx="${idx}"]`);
+    if (totalEl) totalEl.textContent = `total: ${totalQty.toLocaleString("id-ID")} (senilai ${itemRevenue.toLocaleString("id-ID")} WL)`;
+  });
+
+  document.getElementById("totalRevenue").textContent = totalRevenue.toLocaleString("id-ID") + " WL";
+  document.getElementById("totalRevenueLockline").innerHTML = formatLocks(totalRevenue);
+
+  const profit = totalRevenue - totalModal;
+  const profitEl = document.getElementById("totalProfit");
+  profitEl.textContent = (profit >= 0 ? "+" : "") + profit.toLocaleString("id-ID") + " WL";
+  profitEl.className = "value " + (profit >= 0 ? "pos" : "neg");
+}
+
+priceWlEl.addEventListener("input", compute);
+qtyPackEl.addEventListener("input", compute);
+
+renderTabs();
+renderGrid();
