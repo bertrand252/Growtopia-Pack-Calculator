@@ -47,7 +47,7 @@ const PACKS = {
 
 let activePack = "msurg";
 // rate jual per item diinget per-pack biar ga ilang pas pindah tab
-// rate = { a, b, mode } -> mode "item_per_wl": a item = b wl | mode "wl_per_item": a wl = b item
+// rate = { n, mode } -> mode "item_per_wl": 1 wl = n item | mode "wl_per_item": 1 item = n wl
 const sellRates = { msurg: {}, crime: {}, gala: {} };
 
 const tabsEl = document.getElementById("tabs");
@@ -67,17 +67,12 @@ function formatLocks(totalWl) {
   return parts.join(" ");
 }
 
-// harga per 1 item dalam WL, dari rate a/b + mode
+// harga per 1 item dalam WL, dari rate n + mode
 function pricePerItem(rate) {
   if (!rate) return 0;
-  const a = Number(rate.a) || 0;
-  const b = Number(rate.b) || 0;
-  if (rate.mode === "wl_per_item") {
-    // a wl = b item
-    return b > 0 ? a / b : 0;
-  }
-  // default: item_per_wl -> a item = b wl
-  return a > 0 ? b / a : 0;
+  const n = Number(rate.n) || 0;
+  if (rate.mode === "wl_per_item") return n; // 1 item = n wl
+  return n > 0 ? 1 / n : 0; // 1 wl = n item
 }
 
 function renderTabs() {
@@ -98,8 +93,11 @@ function renderGrid() {
     const el = document.createElement("div");
     el.className = "item";
     const rateKey = item.name + "#" + idx;
-    const rate = sellRates[activePack][rateKey] || { a: 0, b: 0, mode: "item_per_wl" };
+    const rate = sellRates[activePack][rateKey] || { n: 0, mode: "item_per_wl" };
     const isWlMode = rate.mode === "wl_per_item";
+    // item_per_wl: "1 wl = [n] item" | wl_per_item: "1 item = [n] wl"
+    const leftUnit = isWlMode ? "item" : "wl";
+    const rightUnit = isWlMode ? "wl" : "item";
     el.innerHTML = `
       <div class="item-head">
         <div class="item-icon">🧰</div>
@@ -111,9 +109,9 @@ function renderGrid() {
           <input type="number" min="0" class="qty-input" data-idx="${idx}" value="${item.qty}" ${pack.locked ? "readonly" : ""} />
         </div>
         <div class="raterow">
-          <input type="number" min="0" class="rate-a" data-idx="${idx}" value="${rate.a}" />
-          <span class="slash">/</span>
-          <input type="number" min="0" class="rate-b" data-idx="${idx}" value="${rate.b}" />
+          <span class="unit">1 ${leftUnit} =</span>
+          <input type="number" min="0" class="rate-n" data-idx="${idx}" value="${rate.n}" />
+          <span class="unit">${rightUnit}</span>
         </div>
         <div class="switchwrap">
           <span class="${!isWlMode ? "active" : ""}">item/wl</span>
@@ -144,19 +142,13 @@ function renderGrid() {
   function getOrCreateRate(idx) {
     const item = PACKS[activePack].items[idx];
     const key = item.name + "#" + idx;
-    if (!sellRates[activePack][key]) sellRates[activePack][key] = { a: 0, b: 0, mode: "item_per_wl" };
+    if (!sellRates[activePack][key]) sellRates[activePack][key] = { n: 0, mode: "item_per_wl" };
     return sellRates[activePack][key];
   }
 
-  gridEl.querySelectorAll(".rate-a").forEach((inp) => {
+  gridEl.querySelectorAll(".rate-n").forEach((inp) => {
     inp.addEventListener("input", (e) => {
-      getOrCreateRate(e.target.dataset.idx).a = Number(e.target.value) || 0;
-      compute();
-    });
-  });
-  gridEl.querySelectorAll(".rate-b").forEach((inp) => {
-    inp.addEventListener("input", (e) => {
-      getOrCreateRate(e.target.dataset.idx).b = Number(e.target.value) || 0;
+      getOrCreateRate(e.target.dataset.idx).n = Number(e.target.value) || 0;
       compute();
     });
   });
@@ -203,6 +195,21 @@ function compute() {
 
 priceWlEl.addEventListener("input", compute);
 qtyPackEl.addEventListener("input", compute);
+
+// theme toggle, ingat pilihan di localStorage
+const themeBtn = document.getElementById("themeToggle");
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  themeBtn.textContent = theme === "dark" ? "☀️" : "🌙";
+}
+let savedTheme = "light";
+try { savedTheme = localStorage.getItem("gt-theme") || "light"; } catch (e) {}
+applyTheme(savedTheme);
+themeBtn.addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  applyTheme(next);
+  try { localStorage.setItem("gt-theme", next); } catch (e) {}
+});
 
 renderTabs();
 renderGrid();
