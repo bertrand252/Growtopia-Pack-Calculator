@@ -21,6 +21,10 @@
       <img class="nav-icon" src="assets/tools/autoclave.png" alt="" />
       <span>Autoclave</span>
     </button>
+    <button class="nav-item" data-tool="nanoforge">
+      <img class="nav-icon" src="assets/tools/nanoforge.png" alt="" />
+      <span>Nanoforge</span>
+    </button>
     <div class="sidebar-footer">
       <button id="themeToggle" class="theme-toggle" title="Toggle theme">🌙</button>
     </div>
@@ -130,11 +134,49 @@
       </div>
     </section>
 
+    <section class="tool-view" id="tool-nanoforge" hidden>
+      <header>
+        <div>
+          <h1>Star Tool Nanoforge</h1>
+          <p>20 of any Star Tool exchanges for 1 of every other Star Tool — see how far your stack goes</p>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label>Starting tool</label>
+            <select id="nfStartTool"></select>
+          </div>
+          <div class="field">
+            <label>Amount you have</label>
+            <input type="number" id="nfAmount" min="0" value="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card summary">
+        <div class="sum-box">
+          <div class="label">Nanoforge cycles</div>
+          <div class="value" id="nfCycles">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="margin-bottom:4px;">
+          <h3 style="margin:0;">Tools</h3>
+        </div>
+        <p class="card-subtitle">Uncheck a tool to keep it instead of feeding it back into the next cycle</p>
+        <div class="grid" id="nfGrid"></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
 <script src="script.js"></script>
 <script src="autoclave.js"></script>
+<script src="nanoforge.js"></script>
 <script src="nav.js"></script>
 </body>
 </html>
