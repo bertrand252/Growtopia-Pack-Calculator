@@ -4,20 +4,20 @@ const PACKS = {
   msurg: {
     label: "MSurg",
     items: [
-      { name: "Surg-E", qty: 5 },
-      { name: "Surgical Anesthetic", qty: 20 },
-      { name: "Surgical Antibiotics", qty: 20 },
-      { name: "Surgical Antiseptic", qty: 20 },
-      { name: "Surgical Clamp", qty: 20 },
-      { name: "Surgical Defibrillator", qty: 20 },
-      { name: "Surgical Lab Kit", qty: 20 },
-      { name: "Surgical Pins", qty: 20 },
-      { name: "Surgical Scalpel", qty: 20 },
-      { name: "Surgical Splint", qty: 20 },
-      { name: "Surgical Sponge", qty: 20 },
-      { name: "Surgical Stitches", qty: 20 },
-      { name: "Surgical Transfusion", qty: 20 },
-      { name: "Surgical Ultrasound", qty: 20 },
+      { name: "Surg-E", qty: 5, icon: "assets/items/surge.png" },
+      { name: "Surgical Anesthetic", qty: 20, icon: "assets/items/anesthetic.png" },
+      { name: "Surgical Antibiotics", qty: 20, icon: "assets/items/antibiotics.png" },
+      { name: "Surgical Antiseptic", qty: 20, icon: "assets/items/antiseptic.png" },
+      { name: "Surgical Clamp", qty: 20, icon: "assets/items/clamp.png" },
+      { name: "Surgical Defibrillator", qty: 20, icon: "assets/items/defibrillator.png" },
+      { name: "Surgical Lab Kit", qty: 20, icon: "assets/items/labkit.png" },
+      { name: "Surgical Pins", qty: 20, icon: "assets/items/pins.png" },
+      { name: "Surgical Scalpel", qty: 20, icon: "assets/items/scalpel.png" },
+      { name: "Surgical Splint", qty: 20, icon: "assets/items/splint.png" },
+      { name: "Surgical Sponge", qty: 20, icon: "assets/items/sponge.png" },
+      { name: "Surgical Stitches", qty: 20, icon: "assets/items/stitches.png" },
+      { name: "Surgical Transfusion", qty: 20, icon: "assets/items/transfusion.png" },
+      { name: "Surgical Ultrasound", qty: 20, icon: "assets/items/ultrasound.png" },
     ],
     locked: true,
   },
@@ -55,15 +55,17 @@ const gridEl = document.getElementById("itemGrid");
 const priceWlEl = document.getElementById("priceWl");
 const qtyPackEl = document.getElementById("qtyPack");
 
+const LOCK_ICON = { bgl: "assets/locks/bgl.png", dl: "assets/locks/dl.png", wl: "assets/locks/wl.png" };
+
 function formatLocks(totalWl) {
   totalWl = Math.max(0, Math.round(totalWl));
   const bgl = Math.floor(totalWl / 10000);
   const dl = Math.floor((totalWl % 10000) / 100);
   const wl = totalWl % 100;
   const parts = [];
-  if (bgl > 0) parts.push(`<span class="badge"><span class="dot bgl"></span>${bgl} BGL</span>`);
-  if (dl > 0) parts.push(`<span class="badge"><span class="dot dl"></span>${dl} DL</span>`);
-  parts.push(`<span class="badge"><span class="dot wl"></span>${wl} WL</span>`);
+  if (bgl > 0) parts.push(`<span class="badge"><img class="lock-icon" src="${LOCK_ICON.bgl}" alt="BGL" />${bgl} BGL</span>`);
+  if (dl > 0) parts.push(`<span class="badge"><img class="lock-icon" src="${LOCK_ICON.dl}" alt="DL" />${dl} DL</span>`);
+  parts.push(`<span class="badge"><img class="lock-icon" src="${LOCK_ICON.wl}" alt="WL" />${wl} WL</span>`);
   return parts.join(" ");
 }
 
@@ -98,16 +100,15 @@ function renderGrid() {
     // item_per_wl: "1 wl = [n] item" | wl_per_item: "1 item = [n] wl"
     const leftUnit = isWlMode ? "item" : "wl";
     const rightUnit = isWlMode ? "wl" : "item";
+    const iconHtml = item.icon
+      ? `<img class="item-icon" src="${item.icon}" alt="" />`
+      : `<div class="item-icon placeholder">🧰</div>`;
     el.innerHTML = `
       <div class="item-head">
-        <div class="item-icon">🧰</div>
+        ${iconHtml}
         <input class="item-name" value="${item.name}" ${pack.locked ? "readonly" : ""} data-idx="${idx}" />
       </div>
       <div class="item-body">
-        <div class="qtyrow">
-          <span>qty/pack:</span>
-          <input type="number" min="0" class="qty-input" data-idx="${idx}" value="${item.qty}" ${pack.locked ? "readonly" : ""} />
-        </div>
         <div class="raterow">
           <span class="unit">1 ${leftUnit} =</span>
           <input type="number" min="0" class="rate-n" data-idx="${idx}" value="${rate.n}" />
@@ -132,13 +133,6 @@ function renderGrid() {
       PACKS[activePack].items[e.target.dataset.idx].name = e.target.value;
     });
   });
-  gridEl.querySelectorAll(".qty-input").forEach((inp) => {
-    inp.addEventListener("input", (e) => {
-      PACKS[activePack].items[e.target.dataset.idx].qty = Number(e.target.value) || 0;
-      compute();
-    });
-  });
-
   function getOrCreateRate(idx) {
     const item = PACKS[activePack].items[idx];
     const key = item.name + "#" + idx;
@@ -181,7 +175,7 @@ function compute() {
     const itemRevenue = totalQty * perItem;
     totalRevenue += itemRevenue;
     const totalEl = gridEl.querySelector(`[data-total-idx="${idx}"]`);
-    if (totalEl) totalEl.textContent = `total: ${totalQty.toLocaleString("id-ID")} (senilai ${itemRevenue.toLocaleString("id-ID")} WL)`;
+    if (totalEl) totalEl.textContent = `total tools: ${totalQty.toLocaleString("id-ID")} (senilai ${itemRevenue.toLocaleString("id-ID")} WL)`;
   });
 
   document.getElementById("totalRevenue").textContent = totalRevenue.toLocaleString("id-ID") + " WL";
