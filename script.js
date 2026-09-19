@@ -1,5 +1,5 @@
-// ponytail: item qty untuk crime & gala belum ada data pasti dari wiki, jadi dibiarkan
-// kosong + editable. isi manual sesuai pack asli in-game biar akurat.
+// data isi pack dari growtopiawiki.com: Master Surgeon's Tool Bag (msurg),
+// Crime Wave pack (crime), Galactic Goodies (gala)
 const PACKS = {
   msurg: {
     label: "MSurg",
@@ -24,24 +24,29 @@ const PACKS = {
   crime: {
     label: "Crime",
     items: [
-      { name: "Item 1", qty: 0 },
-      { name: "Item 2", qty: 0 },
-      { name: "Item 3", qty: 0 },
-      { name: "Item 4", qty: 0 },
-      { name: "Item 5", qty: 0 },
+      { name: "Crime Wave", qty: 1, icon: "assets/items/crimewave.png" },
+      { name: "Superpower Card (random)", qty: 25, icon: "assets/items/superpowercard.png" },
     ],
-    locked: false,
+    locked: true,
   },
   gala: {
     label: "Gala",
     items: [
-      { name: "Item 1", qty: 0 },
-      { name: "Item 2", qty: 0 },
-      { name: "Item 3", qty: 0 },
-      { name: "Item 4", qty: 0 },
-      { name: "Item 5", qty: 0 },
+      { name: "AI Brain", qty: 5, icon: "assets/items/aibrain.png" },
+      { name: "Cyborg Diplomat", qty: 5, icon: "assets/items/cyborgdiplomat.png" },
+      { name: "Galactibolt", qty: 5, icon: "assets/items/galactibolt.png" },
+      { name: "Gigablaster", qty: 5, icon: "assets/items/gigablaster.png" },
+      { name: "Growton Torpedo", qty: 5, icon: "assets/items/growtontorpedo.png" },
+      { name: "HyperShields", qty: 5, icon: "assets/items/hypershields.png" },
+      { name: "Quadriscanner", qty: 5, icon: "assets/items/quadriscanner.png" },
+      { name: "Space Meds", qty: 5, icon: "assets/items/spacemeds.png" },
+      { name: "Star Fuel", qty: 25, icon: "assets/items/starfuel.png" },
+      { name: "Star Supplies", qty: 5, icon: "assets/items/starsupplies.png" },
+      { name: "Stellar Documents", qty: 5, icon: "assets/items/stellardocuments.png" },
+      { name: "Tactical Drone", qty: 5, icon: "assets/items/tacticaldrone.png" },
+      { name: "Teleporter Charge", qty: 5, icon: "assets/items/teleportercharge.png" },
     ],
-    locked: false,
+    locked: true,
   },
 };
 
