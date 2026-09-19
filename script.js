@@ -1,4 +1,4 @@
-// data isi pack dari growtopiawiki.com: Master Surgeon's Tool Bag (msurg),
+// pack contents sourced from growtopiawiki.com: Master Surgeon's Tool Bag (msurg),
 // Crime Wave pack (crime), Galactic Goodies (gala)
 const PACKS = {
   msurg: {
@@ -29,7 +29,7 @@ const PACKS = {
       { name: "Crime Wave", qty: 1, icon: "assets/items/crimewave.png" },
     ],
     locked: true,
-    cardsPerPack: 25, // 5 random Superpower Cards x5 tiap pack, isi manual di bawah
+    cardsPerPack: 25, // 5 random Superpower Cards x5 per pack, entered manually below
   },
   gala: {
     label: "Galactic Goodies",
@@ -54,7 +54,7 @@ const PACKS = {
 };
 
 let activePack = "msurg";
-// rate jual per item diinget per-pack biar ga ilang pas pindah tab
+// per-item resale rate, kept per pack so it survives tab switches
 // rate = { n, mode } -> mode "item_per_wl": 1 wl = n item | mode "wl_per_item": 1 item = n wl
 const sellRates = { msurg: {}, crime: {}, gala: {} };
 
@@ -66,8 +66,8 @@ const cardDeckSection = document.getElementById("cardDeckSection");
 const cardCategoriesEl = document.getElementById("cardCategories");
 const cardCheckStatus = document.getElementById("cardCheckStatus");
 
-// 20 kemungkinan Superpower Card (data: growtopia-tools.vercel.app/Crime).
-// Tiap pack dapat 5 acak dari sini, 5 masing-masing = 25 kartu.
+// 20 possible Superpower Cards (data: growtopia-tools.vercel.app/Crime).
+// Each pack gives 5 random ones from here, 5 copies each = 25 cards.
 const CARD_CATALOG = {
   Fire: [
     { name: "Heat Vision", icon: "assets/items/cards/heat_vision.png" },
@@ -99,7 +99,7 @@ const CARD_CATALOG = {
   ],
 };
 
-// isian manual per kartu (qty didapat + rate jual), keyed by nama kartu
+// manual entry per card (qty received + resale rate), keyed by card name
 const cardQty = {};
 const cardRate = {};
 Object.values(CARD_CATALOG).flat().forEach((c) => {
@@ -121,7 +121,7 @@ function formatLocks(totalWl) {
   return parts.join(" ");
 }
 
-// harga per 1 item dalam WL, dari rate n + mode
+// price per 1 item in WL, derived from rate n + mode
 function pricePerItem(rate) {
   if (!rate) return 0;
   const n = Number(rate.n) || 0;
@@ -165,11 +165,11 @@ function renderCardRows() {
           <img class="item-icon" src="${card.icon}" alt="" />
           <div class="item-info">
             <div class="item-name-static">${card.name}</div>
-            <p class="item-total" data-card-total="${card.name}">${totalQty.toLocaleString("id-ID")} total</p>
+            <p class="item-total" data-card-total="${card.name}">${totalQty.toLocaleString("en-US")} total</p>
           </div>
         </div>
         <div class="item-body">
-          <label class="item-label">Qty didapat (per pack)</label>
+          <label class="item-label">Qty received (per pack)</label>
           <input type="number" min="0" class="card-qty" data-card="${card.name}" value="${qty}" />
           <div class="raterow">
             <span class="unit">1 ${leftUnit} =</span>
@@ -215,7 +215,7 @@ function renderCardRows() {
 function updateCardCheckStatus() {
   const total = Object.values(cardQty).reduce((sum, q) => sum + (Number(q) || 0), 0);
   const target = PACKS.crime.cardsPerPack;
-  cardCheckStatus.textContent = total === target ? `✓ ${total}/${target} kartu` : `⚠ ${total}/${target} kartu — cek lagi`;
+  cardCheckStatus.textContent = total === target ? `✓ ${total}/${target} cards` : `⚠ ${total}/${target} cards — recheck`;
   cardCheckStatus.className = "card-check " + (total === target ? "ok" : "bad");
 }
 
@@ -296,7 +296,7 @@ function compute() {
   const totalModal = priceWl * qtyPack;
 
   document.getElementById("priceLockline").innerHTML = formatLocks(priceWl);
-  document.getElementById("totalModal").textContent = totalModal.toLocaleString("id-ID") + " WL";
+  document.getElementById("totalModal").textContent = totalModal.toLocaleString("en-US") + " WL";
   document.getElementById("totalModalLockline").innerHTML = formatLocks(totalModal);
 
   let totalRevenue = 0;
@@ -308,7 +308,7 @@ function compute() {
     const itemRevenue = totalQty * perItem;
     totalRevenue += itemRevenue;
     const totalEl = gridEl.querySelector(`[data-total-idx="${idx}"]`);
-    if (totalEl) totalEl.textContent = `total tools: ${totalQty.toLocaleString("id-ID")} (senilai ${itemRevenue.toLocaleString("id-ID")} WL)`;
+    if (totalEl) totalEl.textContent = `total tools: ${totalQty.toLocaleString("en-US")} (worth ${itemRevenue.toLocaleString("en-US")} WL)`;
   });
 
   if (activePack === "crime") {
@@ -316,16 +316,16 @@ function compute() {
       const totalQty = (Number(cardQty[card.name]) || 0) * qtyPack;
       totalRevenue += totalQty * pricePerItem(cardRate[card.name]);
       const totalEl = cardCategoriesEl.querySelector(`[data-card-total="${card.name}"]`);
-      if (totalEl) totalEl.textContent = `${totalQty.toLocaleString("id-ID")} total`;
+      if (totalEl) totalEl.textContent = `${totalQty.toLocaleString("en-US")} total`;
     });
   }
 
-  document.getElementById("totalRevenue").textContent = totalRevenue.toLocaleString("id-ID") + " WL";
+  document.getElementById("totalRevenue").textContent = totalRevenue.toLocaleString("en-US") + " WL";
   document.getElementById("totalRevenueLockline").innerHTML = formatLocks(totalRevenue);
 
   const profit = totalRevenue - totalModal;
   const profitEl = document.getElementById("totalProfit");
-  profitEl.textContent = (profit >= 0 ? "+" : "-") + Math.abs(profit).toLocaleString("id-ID") + " WL";
+  profitEl.textContent = (profit >= 0 ? "+" : "-") + Math.abs(profit).toLocaleString("en-US") + " WL";
   profitEl.className = "value " + (profit >= 0 ? "pos" : "neg");
   document.getElementById("totalProfitLockline").innerHTML = formatLocks(Math.abs(profit));
 }
@@ -333,7 +333,7 @@ function compute() {
 priceWlEl.addEventListener("input", compute);
 qtyPackEl.addEventListener("input", compute);
 
-// theme toggle, ingat pilihan di localStorage
+// theme toggle, remembers choice in localStorage
 const themeBtn = document.getElementById("themeToggle");
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);

@@ -1,76 +1,140 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Growtopia Pack Calculator</title>
+<title>Growtopia Tools</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<div class="wrap">
+<div class="app">
 
-  <header>
-    <img class="logo" src="assets/growtopia-logo.png" alt="Growtopia logo" />
-    <div>
-      <h1>Growtopia Pack Calculator</h1>
-      <p>Hitung modal, tools yang didapat, dan profit dari pack</p>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img class="sidebar-logo" src="assets/growtopia-logo.png" alt="Growtopia" />
     </div>
-    <button id="themeToggle" class="theme-toggle" title="Ganti tema">🌙</button>
-  </header>
+    <button class="nav-item active" data-tool="packs">
+      <img class="nav-icon" src="assets/items/msurg-pack.png" alt="" />
+      <span>Pack Calculator</span>
+    </button>
+    <button class="nav-item" data-tool="autoclave">
+      <img class="nav-icon" src="assets/tools/autoclave.png" alt="" />
+      <span>Autoclave</span>
+    </button>
+    <div class="sidebar-footer">
+      <button id="themeToggle" class="theme-toggle" title="Toggle theme">🌙</button>
+    </div>
+  </nav>
 
-  <div class="tabs" id="tabs"></div>
+  <button id="sidebarToggle" class="sidebar-toggle-mobile" title="Menu">☰</button>
 
-  <div class="card">
-    <div class="row">
-      <div class="field">
-        <label>Harga per pack (WL)</label>
-        <input type="number" id="priceWl" min="0" value="0" />
-        <div class="lockline" id="priceLockline"></div>
+  <main class="content">
+
+    <section class="tool-view" id="tool-packs">
+      <header>
+        <div>
+          <h1>Pack Calculator</h1>
+          <p>Calculate your capital, tools received, and profit from packs</p>
+        </div>
+      </header>
+
+      <div class="tabs" id="tabs"></div>
+
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label>Price per pack (WL)</label>
+            <input type="number" id="priceWl" min="0" value="0" />
+            <div class="lockline" id="priceLockline"></div>
+          </div>
+          <div class="field">
+            <label>Packs bought</label>
+            <input type="number" id="qtyPack" min="0" value="1" />
+          </div>
+        </div>
       </div>
-      <div class="field">
-        <label>Jumlah pack dibeli</label>
-        <input type="number" id="qtyPack" min="0" value="1" />
+
+      <div class="card">
+        <div class="row" style="margin-bottom:14px;">
+          <h3 style="margin:0;">Tools per pack</h3>
+        </div>
+        <div class="grid" id="itemGrid"></div>
       </div>
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="row" style="margin-bottom:14px;">
-      <h3 style="margin:0;">Isi tools per pack</h3>
-    </div>
-    <div class="grid" id="itemGrid"></div>
-  </div>
+      <div class="card" id="cardDeckSection" hidden>
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h3 style="margin:0;">Superpower Cards received (total must be 25 × packs bought)</h3>
+          <div id="cardCheckStatus" class="card-check"></div>
+        </div>
+        <p class="card-subtitle">Enter the qty of cards you got per category, leave the rest at 0</p>
+        <div id="cardCategories"></div>
+      </div>
 
-  <div class="card" id="cardDeckSection" hidden>
-    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <h3 style="margin:0;">Superpower Card yang didapat (total harus 25 × jumlah pack)</h3>
-      <div id="cardCheckStatus" class="card-check"></div>
-    </div>
-    <p class="card-subtitle">Isi qty kartu yang kamu dapat per kategori, sisanya biarin 0</p>
-    <div id="cardCategories"></div>
-  </div>
+      <div class="card summary">
+        <div class="sum-box">
+          <div class="label">Total capital</div>
+          <div class="value" id="totalModal">0 WL</div>
+          <div class="lockline" id="totalModalLockline"></div>
+        </div>
+        <div class="sum-box">
+          <div class="label">Total resale value</div>
+          <div class="value" id="totalRevenue">0 WL</div>
+          <div class="lockline" id="totalRevenueLockline"></div>
+        </div>
+        <div class="sum-box profit">
+          <div class="label">Profit</div>
+          <div class="value" id="totalProfit">0 WL</div>
+          <div class="lockline" id="totalProfitLockline"></div>
+        </div>
+      </div>
+    </section>
 
-  <div class="card summary">
-    <div class="sum-box">
-      <div class="label">Total modal</div>
-      <div class="value" id="totalModal">0 WL</div>
-      <div class="lockline" id="totalModalLockline"></div>
-    </div>
-    <div class="sum-box">
-      <div class="label">Total nilai jual tools</div>
-      <div class="value" id="totalRevenue">0 WL</div>
-      <div class="lockline" id="totalRevenueLockline"></div>
-    </div>
-    <div class="sum-box profit">
-      <div class="label">Profit</div>
-      <div class="value" id="totalProfit">0 WL</div>
-      <div class="lockline" id="totalProfitLockline"></div>
-    </div>
-  </div>
+    <section class="tool-view" id="tool-autoclave" hidden>
+      <header>
+        <div>
+          <h1>Autoclave Calculator</h1>
+          <p>20 of any Surgical Tool exchanges for 1 of every other Surgical Tool — see how far your stack goes</p>
+        </div>
+      </header>
 
-  <footer>Created by Bertrand</footer>
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label>Starting tool</label>
+            <select id="acStartTool"></select>
+          </div>
+          <div class="field">
+            <label>Amount you have</label>
+            <input type="number" id="acAmount" min="0" value="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card summary">
+        <div class="sum-box">
+          <div class="label">Autoclave cycles</div>
+          <div class="value" id="acCycles">0</div>
+        </div>
+        <div class="sum-box profit">
+          <div class="label">Surgical Stitches gained</div>
+          <div class="value pos" id="acStitches">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="margin-bottom:4px;">
+          <h3 style="margin:0;">Tools</h3>
+        </div>
+        <p class="card-subtitle">Uncheck a tool to keep it instead of feeding it back into the next cycle</p>
+        <div class="grid" id="acGrid"></div>
+      </div>
+    </section>
+
+  </main>
 </div>
 
 <script src="script.js"></script>
+<script src="autoclave.js"></script>
+<script src="nav.js"></script>
 </body>
 </html>
