@@ -2,6 +2,8 @@
 // Star Tool (growtopiawiki.com/w/Star_Tool_Nanoforge). Star Fuel isn't a
 // Star Tool itself, so it's excluded from the exchange pool.
 const NF_TOOLS = [
+  { name: "Tactical Drone", icon: "assets/items/tacticaldrone.png" },
+  { name: "Teleporter Charge", icon: "assets/items/teleportercharge.png" },
   { name: "AI Brain", icon: "assets/items/aibrain.png" },
   { name: "Cyborg Diplomat", icon: "assets/items/cyborgdiplomat.png" },
   { name: "Galactibolt", icon: "assets/items/galactibolt.png" },
@@ -12,50 +14,121 @@ const NF_TOOLS = [
   { name: "Space Meds", icon: "assets/items/spacemeds.png" },
   { name: "Star Supplies", icon: "assets/items/starsupplies.png" },
   { name: "Stellar Documents", icon: "assets/items/stellardocuments.png" },
-  { name: "Tactical Drone", icon: "assets/items/tacticaldrone.png" },
-  { name: "Teleporter Charge", icon: "assets/items/teleportercharge.png" },
 ];
 const NF_BATCH = 20;
+const NF_PER_PACK = 5; // Galactic Goodies gives 5 of each of these 12 tools
+const NF_GOALS = ["Tactical Drone", "Teleporter Charge"]; // the point of nanoforging — always kept, never fed back in
 
-const nfStartToolEl = document.getElementById("nfStartTool");
-const nfAmountEl = document.getElementById("nfAmount");
-const nfCyclesEl = document.getElementById("nfCycles");
-const nfGridEl = document.getElementById("nfGrid");
-
+const nfHave = {};
 const nfFeed = {};
-NF_TOOLS.forEach((t) => { nfFeed[t.name] = true; });
+NF_TOOLS.forEach((t) => { nfHave[t.name] = 0; nfFeed[t.name] = !NF_GOALS.includes(t.name); });
 
-NF_TOOLS.forEach((t) => {
-  const opt = document.createElement("option");
-  opt.value = t.name;
-  opt.textContent = t.name;
-  nfStartToolEl.appendChild(opt);
-});
+const nfGoalRates = {};
+NF_GOALS.forEach((name) => { nfGoalRates[name] = { n: 0, mode: "item_per_wl" }; });
 
-function nfRenderGrid() {
-  nfGridEl.innerHTML = "";
+const nfTableBody = document.querySelector("#nfTable tbody");
+const nfPayoutBody = document.querySelector("#nfPayoutTable tbody");
+const nfCyclesEl = document.getElementById("nfCycles");
+const nfTotalValueEl = document.getElementById("nfTotalValue");
+const nfTotalValueLocklineEl = document.getElementById("nfTotalValueLockline");
+const nfModeManualBtn = document.getElementById("nfModeManual");
+const nfModePackBtn = document.getElementById("nfModePack");
+const nfPackFieldEl = document.getElementById("nfPackField");
+const nfPacksEl = document.getElementById("nfPacks");
+
+function nfSetMode(mode) {
+  nfModeManualBtn.classList.toggle("active", mode === "manual");
+  nfModePackBtn.classList.toggle("active", mode === "pack");
+  nfPackFieldEl.hidden = mode !== "pack";
+  // switching modes just reveals the packs field — it only overwrites
+  // "Have" once you actually type a pack count, so nothing you've
+  // already entered gets wiped out by clicking the toggle.
+}
+nfModeManualBtn.addEventListener("click", () => nfSetMode("manual"));
+nfModePackBtn.addEventListener("click", () => nfSetMode("pack"));
+
+function nfApplyPacks() {
+  const packs = Math.max(0, Math.floor(Number(nfPacksEl.value) || 0));
   NF_TOOLS.forEach((t) => {
-    const el = document.createElement("div");
-    el.className = "item";
-    el.innerHTML = `
-      <div class="item-head">
-        <img class="item-icon" src="${t.icon}" alt="" />
-        <span class="item-name-static">${t.name}</span>
-      </div>
-      <div class="item-body">
-        <div class="total" data-nf-total="${t.name}">total: 0</div>
-        <label class="ac-feed-label">
-          <input type="checkbox" class="nf-feed" data-tool="${t.name}" checked />
-          Feed into nanoforge
-        </label>
-      </div>
+    nfHave[t.name] = packs * NF_PER_PACK;
+    const inp = nfTableBody.querySelector(`.nf-have[data-tool="${t.name}"]`);
+    if (inp) inp.value = nfHave[t.name];
+  });
+  nfCompute();
+}
+nfPacksEl.addEventListener("input", nfApplyPacks);
+
+function nfRenderTable() {
+  nfTableBody.innerHTML = "";
+  NF_TOOLS.forEach((t) => {
+    const isGoal = NF_GOALS.includes(t.name);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><img class="table-icon" src="${t.icon}" alt="" /></td>
+      <td>${t.name}${isGoal ? ' <span class="goal-tag">goal</span>' : ""}</td>
+      <td><input type="number" min="0" class="nf-have" data-tool="${t.name}" value="0" /></td>
+      <td><input type="checkbox" class="nf-feed" data-tool="${t.name}" ${nfFeed[t.name] ? "checked" : ""} ${isGoal ? "disabled" : ""} /></td>
+      <td class="table-after" data-nf-after="${t.name}">0</td>
     `;
-    nfGridEl.appendChild(el);
+    nfTableBody.appendChild(tr);
   });
 
-  nfGridEl.querySelectorAll(".nf-feed").forEach((cb) => {
+  nfTableBody.querySelectorAll(".nf-have").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      nfHave[e.target.dataset.tool] = Number(e.target.value) || 0;
+      nfCompute();
+    });
+  });
+  nfTableBody.querySelectorAll(".nf-feed").forEach((cb) => {
     cb.addEventListener("change", (e) => {
       nfFeed[e.target.dataset.tool] = e.target.checked;
+      nfCompute();
+    });
+  });
+}
+
+function nfRenderPayout() {
+  nfPayoutBody.innerHTML = "";
+  NF_GOALS.forEach((name) => {
+    const tool = NF_TOOLS.find((t) => t.name === name);
+    const rate = nfGoalRates[name];
+    const isWlMode = rate.mode === "wl_per_item";
+    const leftUnit = isWlMode ? "item" : "wl";
+    const rightUnit = isWlMode ? "wl" : "item";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><img class="table-icon" src="${tool.icon}" alt="" /></td>
+      <td>${name}</td>
+      <td class="table-after" data-payout-after="${name}">0</td>
+      <td>
+        <div class="raterow">
+          <span class="unit">1 ${leftUnit} =</span>
+          <input type="number" min="0" class="payout-rate-n" data-name="${name}" value="${rate.n}" />
+          <span class="unit">${rightUnit}</span>
+          <label class="switch">
+            <input type="checkbox" class="payout-rate-mode" data-name="${name}" ${isWlMode ? "checked" : ""} />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </td>
+      <td class="table-after" data-payout-value="${name}">0 WL</td>
+    `;
+    nfPayoutBody.appendChild(tr);
+  });
+
+  nfPayoutBody.querySelectorAll(".payout-rate-n").forEach((inp) => {
+    inp.addEventListener("input", (e) => {
+      nfGoalRates[e.target.dataset.name].n = Number(e.target.value) || 0;
+      nfCompute();
+    });
+  });
+  nfPayoutBody.querySelectorAll(".payout-rate-mode").forEach((cb) => {
+    cb.addEventListener("change", (e) => {
+      const isWlMode = e.target.checked;
+      nfGoalRates[e.target.dataset.name].mode = isWlMode ? "wl_per_item" : "item_per_wl";
+      const units = e.target.closest(".raterow").querySelectorAll(".unit");
+      units[0].textContent = `1 ${isWlMode ? "item" : "wl"} =`;
+      units[1].textContent = isWlMode ? "wl" : "item";
       nfCompute();
     });
   });
@@ -83,20 +156,31 @@ function nfRun(inventory) {
 
 function nfCompute() {
   const inventory = {};
-  NF_TOOLS.forEach((t) => { inventory[t.name] = 0; });
-  inventory[nfStartToolEl.value] = Math.max(0, Math.floor(Number(nfAmountEl.value) || 0));
+  NF_TOOLS.forEach((t) => { inventory[t.name] = Number(nfHave[t.name]) || 0; });
 
   const cycles = nfRun(inventory);
   nfCyclesEl.textContent = cycles.toLocaleString("en-US");
 
   NF_TOOLS.forEach((t) => {
-    const el = nfGridEl.querySelector(`[data-nf-total="${t.name}"]`);
-    if (el) el.textContent = `total: ${inventory[t.name].toLocaleString("en-US")}`;
+    const el = nfTableBody.querySelector(`[data-nf-after="${t.name}"]`);
+    if (el) el.textContent = inventory[t.name].toLocaleString("en-US");
   });
+
+  let totalValue = 0;
+  NF_GOALS.forEach((name) => {
+    const qty = inventory[name] || 0;
+    const value = qty * pricePerItem(nfGoalRates[name]);
+    totalValue += value;
+    const afterEl = nfPayoutBody.querySelector(`[data-payout-after="${name}"]`);
+    if (afterEl) afterEl.textContent = qty.toLocaleString("en-US");
+    const valueEl = nfPayoutBody.querySelector(`[data-payout-value="${name}"]`);
+    if (valueEl) valueEl.textContent = value.toLocaleString("en-US") + " WL";
+  });
+
+  nfTotalValueEl.textContent = totalValue.toLocaleString("en-US") + " WL";
+  nfTotalValueLocklineEl.innerHTML = formatLocks(totalValue);
 }
 
-nfStartToolEl.addEventListener("change", nfCompute);
-nfAmountEl.addEventListener("input", nfCompute);
-
-nfRenderGrid();
+nfRenderTable();
+nfRenderPayout();
 nfCompute();

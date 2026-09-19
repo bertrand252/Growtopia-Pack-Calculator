@@ -97,40 +97,51 @@
       <header>
         <div>
           <h1>Autoclave Calculator</h1>
-          <p>20 of any Surgical Tool exchanges for 1 of every other Surgical Tool — see how far your stack goes</p>
+          <p>The Autoclave machine trades 20 of one Surgical Tool for 1 of every other Surgical Tool. Type in how many of each tool you're sitting on, and it simulates feeding the excess through — repeatedly, until nothing's left to trade.</p>
         </div>
       </header>
 
       <div class="card">
-        <div class="row">
-          <div class="field">
-            <label>Starting tool</label>
-            <select id="acStartTool"></select>
-          </div>
-          <div class="field">
-            <label>Amount you have</label>
-            <input type="number" id="acAmount" min="0" value="0" />
+        <div class="row" style="margin-bottom:4px;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;">Your tools</h3>
+          <div class="sum-box" style="padding:8px 14px;">
+            <div class="label">Autoclave runs</div>
+            <div class="value" id="acCycles">0</div>
           </div>
         </div>
-      </div>
-
-      <div class="card summary">
-        <div class="sum-box">
-          <div class="label">Autoclave cycles</div>
-          <div class="value" id="acCycles">0</div>
+        <div class="mode-toggle" style="margin-bottom:12px;">
+          <button class="mode-btn active" data-mode="manual" id="acModeManual">Loose tools</button>
+          <button class="mode-btn" data-mode="pack" id="acModePack">From unopened packs</button>
         </div>
-        <div class="sum-box profit">
-          <div class="label">Surgical Stitches gained</div>
-          <div class="value pos" id="acStitches">0</div>
+        <div class="field" id="acPackField" hidden style="max-width:260px;margin-bottom:12px;">
+          <label>Master Surgeon's Tool Bags opened</label>
+          <input type="number" id="acPacks" min="0" value="0" />
+        </div>
+        <p class="card-subtitle">"Have" = how many you own right now. Untick "Feed" for a tool you want to keep instead of trading away.</p>
+        <div class="table-wrap">
+          <table class="tool-table" id="acTable">
+            <thead><tr><th></th><th>Tool</th><th>Have</th><th>Feed</th><th>After</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
 
       <div class="card">
-        <div class="row" style="margin-bottom:4px;">
-          <h3 style="margin:0;">Tools</h3>
+        <h3 style="margin:0 0 4px;">Payout vs. selling loose</h3>
+        <p class="card-subtitle">Set your Surgical Stitches resale rate to see what autoclaving is actually worth</p>
+        <div class="table-wrap">
+          <table class="tool-table" id="acPayoutTable">
+            <thead><tr><th></th><th>Tool</th><th>After</th><th>Resale rate</th><th>Value</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
-        <p class="card-subtitle">Uncheck a tool to keep it instead of feeding it back into the next cycle</p>
-        <div class="grid" id="acGrid"></div>
+        <div class="card summary" style="margin:14px 0 0;">
+          <div class="sum-box profit">
+            <div class="label">Total value from autoclaving</div>
+            <div class="value pos" id="acTotalValue">0 WL</div>
+            <div class="lockline" id="acTotalValueLockline"></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -138,36 +149,51 @@
       <header>
         <div>
           <h1>Star Tool Nanoforge</h1>
-          <p>20 of any Star Tool exchanges for 1 of every other Star Tool — see how far your stack goes</p>
+          <p>The Nanoforge trades 20 of one Star Tool for 1 of every other Star Tool. Type in how many of each you're sitting on, and it simulates feeding the excess through — repeatedly, until nothing's left to trade.</p>
         </div>
       </header>
 
       <div class="card">
-        <div class="row">
-          <div class="field">
-            <label>Starting tool</label>
-            <select id="nfStartTool"></select>
-          </div>
-          <div class="field">
-            <label>Amount you have</label>
-            <input type="number" id="nfAmount" min="0" value="0" />
+        <div class="row" style="margin-bottom:4px;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;">Your tools</h3>
+          <div class="sum-box" style="padding:8px 14px;">
+            <div class="label">Nanoforge runs</div>
+            <div class="value" id="nfCycles">0</div>
           </div>
         </div>
-      </div>
-
-      <div class="card summary">
-        <div class="sum-box">
-          <div class="label">Nanoforge cycles</div>
-          <div class="value" id="nfCycles">0</div>
+        <div class="mode-toggle" style="margin-bottom:12px;">
+          <button class="mode-btn active" data-mode="manual" id="nfModeManual">Loose tools</button>
+          <button class="mode-btn" data-mode="pack" id="nfModePack">From unopened packs</button>
+        </div>
+        <div class="field" id="nfPackField" hidden style="max-width:260px;margin-bottom:12px;">
+          <label>Galactic Goodies opened</label>
+          <input type="number" id="nfPacks" min="0" value="0" />
+        </div>
+        <p class="card-subtitle">"Have" = how many you own right now. Untick "Feed" for a tool you want to keep instead of trading away.</p>
+        <div class="table-wrap">
+          <table class="tool-table" id="nfTable">
+            <thead><tr><th></th><th>Tool</th><th>Have</th><th>Feed</th><th>After</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
 
       <div class="card">
-        <div class="row" style="margin-bottom:4px;">
-          <h3 style="margin:0;">Tools</h3>
+        <h3 style="margin:0 0 4px;">Payout vs. selling loose</h3>
+        <p class="card-subtitle">Set resale rates for Tactical Drone & Teleporter Charge to see what nanoforging is actually worth</p>
+        <div class="table-wrap">
+          <table class="tool-table" id="nfPayoutTable">
+            <thead><tr><th></th><th>Tool</th><th>After</th><th>Resale rate</th><th>Value</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
-        <p class="card-subtitle">Uncheck a tool to keep it instead of feeding it back into the next cycle</p>
-        <div class="grid" id="nfGrid"></div>
+        <div class="card summary" style="margin:14px 0 0;">
+          <div class="sum-box profit">
+            <div class="label">Total value from nanoforging</div>
+            <div class="value pos" id="nfTotalValue">0 WL</div>
+            <div class="lockline" id="nfTotalValueLockline"></div>
+          </div>
+        </div>
       </div>
     </section>
 

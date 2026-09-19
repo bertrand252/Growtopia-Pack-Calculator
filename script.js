@@ -203,8 +203,11 @@ function renderCardRows() {
   });
   cardCategoriesEl.querySelectorAll(".card-rate-mode").forEach((inp) => {
     inp.addEventListener("change", (e) => {
-      cardRate[e.target.dataset.card].mode = e.target.checked ? "wl_per_item" : "item_per_wl";
-      renderCardRows();
+      const isWlMode = e.target.checked;
+      cardRate[e.target.dataset.card].mode = isWlMode ? "wl_per_item" : "item_per_wl";
+      const units = e.target.closest(".item-body").querySelectorAll(".unit");
+      units[0].textContent = `1 ${isWlMode ? "item" : "wl"} =`;
+      units[1].textContent = isWlMode ? "wl" : "item";
       compute();
     });
   });
@@ -281,8 +284,16 @@ function renderGrid() {
   });
   gridEl.querySelectorAll(".rate-mode").forEach((inp) => {
     inp.addEventListener("change", (e) => {
-      getOrCreateRate(e.target.dataset.idx).mode = e.target.checked ? "wl_per_item" : "item_per_wl";
-      renderGrid();
+      const isWlMode = e.target.checked;
+      getOrCreateRate(e.target.dataset.idx).mode = isWlMode ? "wl_per_item" : "item_per_wl";
+      const body = e.target.closest(".item-body");
+      const units = body.querySelectorAll(".raterow .unit");
+      units[0].textContent = `1 ${isWlMode ? "item" : "wl"} =`;
+      units[1].textContent = isWlMode ? "wl" : "item";
+      const labels = body.querySelectorAll(".switchwrap span");
+      labels[0].classList.toggle("active", !isWlMode);
+      labels[1].classList.toggle("active", isWlMode);
+      compute();
     });
   });
 
