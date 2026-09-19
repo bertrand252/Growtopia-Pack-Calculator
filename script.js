@@ -2,7 +2,8 @@
 // Crime Wave pack (crime), Galactic Goodies (gala)
 const PACKS = {
   msurg: {
-    label: "MSurg",
+    label: "Master Surgeon's Tool Bag",
+    icon: "assets/items/msurg-pack.png",
     items: [
       { name: "Surg-E", qty: 5, icon: "assets/items/surge.png" },
       { name: "Surgical Anesthetic", qty: 20, icon: "assets/items/anesthetic.png" },
@@ -22,7 +23,8 @@ const PACKS = {
     locked: true,
   },
   crime: {
-    label: "Crime",
+    label: "Crime Wave",
+    icon: "assets/items/crimewave.png",
     items: [
       { name: "Crime Wave", qty: 1, icon: "assets/items/crimewave.png" },
       { name: "Superpower Card (random)", qty: 25, icon: "assets/items/superpowercard.png" },
@@ -30,7 +32,8 @@ const PACKS = {
     locked: true,
   },
   gala: {
-    label: "Gala",
+    label: "Galactic Goodies",
+    icon: "assets/items/aibrain.png",
     items: [
       { name: "AI Brain", qty: 5, icon: "assets/items/aibrain.png" },
       { name: "Cyborg Diplomat", qty: 5, icon: "assets/items/cyborgdiplomat.png" },
@@ -85,9 +88,10 @@ function pricePerItem(rate) {
 function renderTabs() {
   tabsEl.innerHTML = "";
   Object.keys(PACKS).forEach((key) => {
+    const pack = PACKS[key];
     const btn = document.createElement("div");
     btn.className = "tab" + (key === activePack ? " active" : "");
-    btn.textContent = PACKS[key].label;
+    btn.innerHTML = `<img class="tab-icon" src="${pack.icon}" alt="" /><span>${pack.label}</span>`;
     btn.onclick = () => { activePack = key; renderTabs(); renderGrid(); };
     tabsEl.appendChild(btn);
   });
