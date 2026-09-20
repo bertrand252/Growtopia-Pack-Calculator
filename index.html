@@ -33,6 +33,10 @@
       <img class="nav-icon" src="assets/tools/roles.png" alt="" />
       <span>Roles</span>
     </button>
+    <button class="nav-item" data-tool="farm">
+      <img class="nav-icon" src="assets/farm/bush.png" alt="" />
+      <span>Farm Calculator</span>
+    </button>
     <div class="sidebar-footer">
       <button id="themeToggle" class="theme-toggle" title="Toggle theme">🌙</button>
     </div>
@@ -369,7 +373,7 @@
         <p class="card-subtitle">Weekly totals = 5×(normal quests×normal rate) + 2×(bonus quests×bonus rate); quests needed = points ÷ (weekly points / weekly quests)</p>
         <div class="table-wrap">
           <table class="tool-table" id="roleTable">
-            <thead><tr><th>Level</th><th>Pts/quest (normal)</th><th>Pts/quest (bonus)</th><th>Points for this level</th><th>Quests</th><th>Days</th></tr></thead>
+            <thead><tr><th>Level</th><th>Pts/quest (normal)</th><th>Pts/quest (bonus)</th><th>Avg pts/quest</th><th>Points for this level</th><th>Quests</th><th>Days</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -418,6 +422,245 @@
       </div>
     </section>
 
+    <section class="tool-view" id="tool-farm" hidden>
+      <header>
+        <div>
+          <h1>Farm Calculator</h1>
+          <p>Gear up for Extra Block / Extra Gems, then check whether what you're breaking is even worth farming.</p>
+        </div>
+      </header>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;">Extra Block &amp; Extra Gems gear</h3>
+        <p class="card-subtitle">
+          <strong>Disclaimer:</strong> none of this is officially documented by Growtopia — numbers are from forum posts, streamers, and a fan calculator's source, and some are disputed (noted inline). Total extra-block chance is capped at 20% here as an estimate (community claims range 15-20%, nothing official) — don't treat these totals as exact.
+        </p>
+
+        <button type="button" id="breakLoadBestBtn" class="addbtn" style="width:100%;margin-bottom:14px;">⚡ Load Best Combo</button>
+
+        <div class="break-layout">
+          <div class="break-preview">
+            <img id="breakAvatar" src="" alt="Character preview" hidden />
+            <div id="breakAvatarPlaceholder" class="break-avatar-placeholder">Preview images not added yet</div>
+          </div>
+
+          <div class="break-options">
+            <div class="break-group-label">Shirt slot (pick one)</div>
+            <div class="role-picker" id="breakShirtPicker">
+              <button type="button" class="role-picker-toggle" id="breakShirtToggle">
+                <span id="breakShirtLabel">None</span>
+                <span class="role-picker-arrow">▾</span>
+              </button>
+              <div class="role-picker-menu" id="breakShirtMenu" hidden>
+                <button type="button" class="role-picker-item active" data-value="none" data-label="None">
+                  <span>None</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="galaxy" data-label="Galaxy Skin">
+                  <img class="role-picker-icon" src="assets/farm/boosts/galaxyskin.png" alt="" /><span>Galaxy Skin — 10% extra block</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="jersey" data-label="American Sports Ball Jersey">
+                  <img class="role-picker-icon" src="assets/farm/boosts/jersey.png" alt="" /><span>American Sports Ball Jersey — 10% extra gems</span><span class="role-picker-radio"></span>
+                </button>
+              </div>
+            </div>
+            <input type="hidden" id="breakShirt" value="none" />
+
+            <div class="break-group-label">Ancestral / Artifact slot (pick one)</div>
+            <div class="role-picker" id="breakAncestralPicker">
+              <button type="button" class="role-picker-toggle" id="breakAncestralToggle">
+                <span id="breakAncestralLabel">None</span>
+                <span class="role-picker-arrow">▾</span>
+              </button>
+              <div class="role-picker-menu" id="breakAncestralMenu" hidden>
+                <button type="button" class="role-picker-item active" data-value="none" data-label="None">
+                  <span>None</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="atod" data-label="Ancestral Tesseract of Dimensions">
+                  <img class="role-picker-icon" src="assets/farm/boosts/atod.png" alt="" /><span>Ancestral Tesseract of Dimensions (block)</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="lens" data-label="Ancestral Lens of Riches">
+                  <img class="role-picker-icon" src="assets/farm/boosts/lens.png" alt="" /><span>Ancestral Lens of Riches (gems)</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="angeldevil" data-label="Angel and Devil">
+                  <img class="role-picker-icon" src="assets/farm/boosts/angeldevil.png" alt="" /><span>Angel and Devil — ~5% random block OR gems</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="kuwiis" data-label="Kuwii's Tutelar">
+                  <img class="role-picker-icon" src="assets/farm/boosts/kuwiis.png" alt="" /><span>Kuwii's Tutelar — ~5% extra block</span><span class="role-picker-radio"></span>
+                </button>
+              </div>
+            </div>
+            <input type="hidden" id="breakAncestral" value="none" />
+            <div class="field" id="breakAncestralLevelField" hidden>
+              <select id="breakAncestralLevel">
+                <option value="5">Base — 5%</option>
+                <option value="6">Level 2 — 6%</option>
+                <option value="7">Level 3 — 7%</option>
+                <option value="8">Level 4 — 8%</option>
+                <option value="9">Level 5 — 9%</option>
+                <option value="10">Level 6 — 10%</option>
+              </select>
+            </div>
+
+            <div class="break-group-label">Hat &amp; Hair</div>
+            <label class="bonus-card">
+              <input type="checkbox" id="breakWws" />
+              <img class="bonus-icon" src="assets/farm/boosts/wws.png" alt="" />
+              <div>
+                <div class="bonus-name">Winter Wishing Star</div>
+                <div class="bonus-value">2.5% extra block <span class="info-only-tag">disputed: 2% or 2.5%</span></div>
+              </div>
+            </label>
+            <label class="bonus-card">
+              <input type="checkbox" id="breakBbh" />
+              <img class="bonus-icon" src="assets/farm/boosts/bbh.png" alt="" />
+              <div>
+                <div class="bonus-name">Buddy's Block Head</div>
+                <div class="bonus-value">2% extra block <span class="info-only-tag">disputed: 2% or 4%</span></div>
+              </div>
+            </label>
+
+            <div class="break-group-label">Consumables (30 min, stacks on top of the 20% gear cap)</div>
+            <label class="bonus-card">
+              <input type="checkbox" id="breakLucky" />
+              <img class="bonus-icon" src="assets/farm/boosts/luckyclover.png" alt="" />
+              <div>
+                <div class="bonus-name">"Lucky!" mod (Clover / Rabbit's Foot / Songpyeon)</div>
+                <div class="bonus-value">+10% extra block (on top of gear cap) + 10% chance gems ×5</div>
+              </div>
+            </label>
+            <label class="bonus-card">
+              <input type="checkbox" id="breakArroz" />
+              <img class="bonus-icon" src="assets/farm/boosts/arroz.png" alt="" />
+              <div>
+                <div class="bonus-name">Arroz Con Pollo</div>
+                <div class="bonus-value">10% chance +1 gem — stacks with "Lucky!"</div>
+              </div>
+            </label>
+
+            <div class="break-group-label">Guild &amp; Role (stacks on top of the 20% gear cap)</div>
+            <label class="bonus-card">
+              <input type="checkbox" id="breakGuildPotion" />
+              <div>
+                <div class="bonus-name">Guild Potion - Blocks</div>
+                <div class="bonus-value">+1% extra block, guild-wide, 12h</div>
+              </div>
+            </label>
+            <div class="field">
+              <label>Builder role — Frugal Framework level</label>
+              <select id="breakBuilderLevel">
+                <option value="0">Off</option>
+                <option value="0.5">Level 2 — +0.5%</option>
+                <option value="1">Level 4 — +1%</option>
+                <option value="1.5">Level 6 — +1.5%</option>
+                <option value="2">Level 8 — +2%</option>
+                <option value="3">Level 10 — +3%</option>
+              </select>
+            </div>
+
+            <div class="break-group-label">World</div>
+            <label class="bonus-card">
+              <input type="checkbox" id="breakEmerald" />
+              <img class="bonus-icon" src="assets/farm/boosts/emeraldlock.png" alt="" />
+              <div>
+                <div class="bonus-name">Emerald Lock (world's lock)</div>
+                <div class="bonus-value">10% extra gems, flat</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="row" style="margin:14px 0 0;">
+          <div class="field">
+            <label>Blocks to break</label>
+            <input type="number" id="farmBlocks" min="0" value="0" />
+          </div>
+        </div>
+
+        <div class="card summary" style="margin:14px 0 0;">
+          <div class="sum-box">
+            <div class="label">Extra-block chance (gear capped 20% + Lucky/Guild/Builder on top)</div>
+            <div class="value" id="breakEffectiveChance">0%</div>
+            <div class="lockline" id="breakWhichItem"></div>
+          </div>
+          <div class="sum-box profit">
+            <div class="label">Expected extra blocks (from Blocks to break above)</div>
+            <div class="value pos" id="breakExtraBlocks">0</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin:14px 0 0;">
+          <h3 style="margin:0 0 4px;">Extra Gems effects active</h3>
+          <p class="card-subtitle">These are different kinds of effects (flat chance, multiplier chance) so they're listed separately instead of forced into one misleading %</p>
+          <ul id="breakGemsList" class="break-gems-list"><li class="break-gems-empty">Nothing equipped</li></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;">Farmable or not?</h3>
+        <p class="card-subtitle">You decide — check the item's own wiki page (max drop of 4 = not farmable, 8/12/16+ = farmable tiers below). This also sets how many blocks you get per tree harvested in the simulator below.</p>
+        <div class="tabs" id="farmTierTabs">
+          <button type="button" class="tab" data-value="not">❌ Not farmable<br /><small>×2.5 blocks/tree</small></button>
+          <button type="button" class="tab active" data-value="farmable">✅ Farmable<br /><small>×3.75 blocks/tree</small></button>
+        </div>
+        <input type="hidden" id="farmTier" value="farmable" />
+        <div class="farmable-result" id="farmableResult"></div>
+
+        <div class="card" style="margin:14px 0 0;">
+          <h3 style="margin:0 0 4px;">Seed farming simulator</h3>
+          <p class="card-subtitle">
+            <strong>Rough estimate only</strong> — reuses the Extra Block % from the gear card above. Formula pattern cross-checked against a fan-made calculator (see CLAUDE.md); still not an official Growtopia source, treat it as an example rather than a farming reference.
+          </p>
+          <div class="row">
+            <div class="field">
+              <label>Item rarity (check the item's own wiki page)</label>
+              <input type="number" id="seedRarity" min="0" value="0" />
+            </div>
+            <div class="field">
+              <label>Seeds planted (start)</label>
+              <input type="number" id="seedPlanted" min="0" value="2700" />
+            </div>
+            <div class="field">
+              <label>Plant→harvest→replant cycles</label>
+              <input type="number" id="seedCycles" min="1" value="1" />
+            </div>
+          </div>
+          <div class="break-group-label">Harvest bonus (rarity must be below 100 for these to apply)</div>
+          <label class="bonus-card">
+            <input type="checkbox" id="seedDcs" />
+            <div>
+              <div class="bonus-name">Dreamcatcher Staff</div>
+              <div class="bonus-value">+2% × seeds planted, extra blocks on harvest</div>
+            </div>
+          </label>
+          <label class="bonus-card">
+            <input type="checkbox" id="seedHarvester" />
+            <div>
+              <div class="bonus-name">Harvester / Harvester of Sorrows (with Fuel Packs)</div>
+              <div class="bonus-value">+10% harvested blocks (Fuel Packs just keep it active, no bonus on their own)</div>
+            </div>
+          </label>
+          <div class="card summary" style="margin:14px 0 0;">
+            <div class="sum-box">
+              <div class="label">Blocks smashed (last cycle) — base harvest + break bonus</div>
+              <div class="value" id="seedBlocks">0</div>
+            </div>
+            <div class="sum-box">
+              <div class="label">Final seeds (after all cycles)</div>
+              <div class="value" id="seedFinal">0</div>
+            </div>
+            <div class="sum-box profit">
+              <div class="label">Net seed profit / ratio</div>
+              <div class="value pos" id="seedWithBonus">0</div>
+            </div>
+            <div class="sum-box">
+              <div class="label">Est. gems (all cycles) — reuses Emerald Lock/Arroz/Lucky/Jersey/Lens from gear card</div>
+              <div class="value" id="seedGems">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -426,6 +669,7 @@
 <script src="nanoforge.js"></script>
 <script src="surgery.js"></script>
 <script src="roles.js"></script>
+<script src="farm.js"></script>
 <script src="nav.js"></script>
 </body>
 </html>

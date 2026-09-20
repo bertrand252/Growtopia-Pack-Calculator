@@ -132,15 +132,18 @@ function roleCompute() {
 
     let quests = 0;
     let days = 0;
+    let avgPointsPerQuest = 0;
     if (remaining > 0) {
       if (week.weeklyQuests <= 0 || week.weeklyPoints <= 0) {
         unreachable = true;
       } else {
-        const avgPointsPerQuest = week.weeklyPoints / week.weeklyQuests;
+        avgPointsPerQuest = week.weeklyPoints / week.weeklyQuests;
         const avgQuestsPerDay = week.weeklyQuests / 7;
         quests = Math.ceil(remaining / avgPointsPerQuest);
         days = Math.ceil(quests / avgQuestsPerDay);
       }
+    } else if (week.weeklyQuests > 0) {
+      avgPointsPerQuest = week.weeklyPoints / week.weeklyQuests;
     }
 
     totalPoints += remaining;
@@ -152,6 +155,7 @@ function roleCompute() {
       <td>Level ${level} → ${level + 1}</td>
       <td>${normalRate.toLocaleString("en-US", { maximumFractionDigits: 1 })}</td>
       <td>${bonusRate.toLocaleString("en-US", { maximumFractionDigits: 1 })}</td>
+      <td>${avgPointsPerQuest > 0 ? avgPointsPerQuest.toLocaleString("en-US", { maximumFractionDigits: 1 }) : "—"}<br><span class="formula-hint">(${ROLE_NORMAL_DAYS}×${questsNormal}×${normalRate.toLocaleString("en-US", { maximumFractionDigits: 1 })} + ${ROLE_BONUS_DAYS}×${questsBonus}×${bonusRate.toLocaleString("en-US", { maximumFractionDigits: 1 })}) ÷ ${week.weeklyQuests.toLocaleString("en-US")} quests</span></td>
       <td>${remaining.toLocaleString("en-US")}</td>
       <td>${unreachable ? "—" : quests.toLocaleString("en-US")}</td>
       <td>${unreachable ? "never" : days.toLocaleString("en-US")}</td>
