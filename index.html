@@ -278,8 +278,12 @@
             <input type="hidden" id="roleType" value="Farmer" />
           </div>
           <div class="field">
-            <label>Quests per day</label>
-            <input type="number" id="roleQuestsPerDay" min="0" value="0" />
+            <label>Quests on normal days</label>
+            <input type="number" id="roleQuestsNormal" min="0" value="0" />
+          </div>
+          <div class="field">
+            <label>Quests on a bonus day</label>
+            <input type="number" id="roleQuestsBonus" min="0" value="0" />
           </div>
         </div>
         <div class="row" style="margin-top:14px;">
@@ -320,8 +324,8 @@
           </label>
         </div>
 
-        <h3 style="margin:16px 0 4px;">Weekly bonus days <span class="info-only-tag">info only, not counted below</span></h3>
-        <p class="card-subtitle">Every 7-day week has 1 Roles Day (this role's own turn) and 1 different Jack of All Trades Day (any role counts) — 2 boosted days out of 7, giving +25% points that day. These are just here for reference — the totals below don't factor them in, since folding "sometimes +25%" into a single quests-per-day number made the math more confusing than helpful.</p>
+        <h3 style="margin:16px 0 4px;">Weekly bonus days</h3>
+        <p class="card-subtitle">Every 7-day week always has 1 Roles Day (this role's own turn) and 1 different Jack of All Trades Day (any role counts) — 2 boosted days out of 7, giving +25% points that day. They're not optional, so there's no checkbox: the totals below already assume 5 normal days + these 2 bonus days every week.</p>
         <div class="bonus-grid">
           <div class="bonus-card">
             <img class="bonus-icon" src="assets/roles/growtoken.png" alt="" />
@@ -338,6 +342,11 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;">This week's math (at your current level's rate)</h3>
+        <p class="card-subtitle" id="roleWeeklyMath">—</p>
       </div>
 
       <div class="card summary">
@@ -357,10 +366,10 @@
 
       <div class="card">
         <h3 style="margin:0 0 4px;">Level breakdown</h3>
-        <p class="card-subtitle">Points/quest per level, and quests/days needed at your quests-per-day rate above</p>
+        <p class="card-subtitle">Weekly totals = 5×(normal quests×normal rate) + 2×(bonus quests×bonus rate); quests needed = points ÷ (weekly points / weekly quests)</p>
         <div class="table-wrap">
           <table class="tool-table" id="roleTable">
-            <thead><tr><th>Level</th><th>Points/quest</th><th>Points for this level</th><th>Quests</th><th>Days</th></tr></thead>
+            <thead><tr><th>Level</th><th>Pts/quest (normal)</th><th>Pts/quest (bonus)</th><th>Points for this level</th><th>Quests</th><th>Days</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -371,22 +380,27 @@
         <p class="card-subtitle">Each day, quest 1 is free. Quest k after that costs 3,000 × (k-1)² gems — fixed, same for every role and every player.</p>
         <div class="card summary" style="margin:14px 0 0;">
           <div class="sum-box">
-            <div class="label">Gem cost per day (at your quests/day)</div>
-            <div class="value" id="roleDailyGems">0</div>
+            <div class="label">Gem cost, normal day</div>
+            <div class="value" id="roleDailyGemsNormal">0</div>
+          </div>
+          <div class="sum-box">
+            <div class="label">Gem cost, bonus day</div>
+            <div class="value" id="roleDailyGemsBonus">0</div>
           </div>
           <div class="sum-box profit">
-            <div class="label">Total gem cost</div>
+            <div class="label">Total gem cost per week</div>
             <div class="value pos" id="roleTotalGems">0</div>
+            <div class="lockline" id="roleGemMath"></div>
           </div>
         </div>
       </div>
 
       <div class="card">
         <h3 style="margin:0 0 4px;"><img class="inline-icon" src="assets/roles/gems.png" alt="" /> Gems → WL converter</h3>
-        <p class="card-subtitle">Turns the total gem cost above into WL using today's exchange rate, so you can see it in the same currency as the rest of this app</p>
+        <p class="card-subtitle">Turns the weekly gem cost above into WL using today's exchange rate, so you can see it in the same currency as the rest of this app</p>
         <div class="row">
           <div class="field">
-            <label>Gems spent (auto-filled from total gem cost above)</label>
+            <label>Gems spent (auto-filled from weekly gem cost above)</label>
             <input type="number" id="roleGemsSpent" min="0" value="0" readonly />
           </div>
           <div class="field">

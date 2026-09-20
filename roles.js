@@ -6,6 +6,9 @@ const ROLE_BASE_POINTS = 1300;
 const ROLE_BASE_PER_QUEST = 270;
 const ROLE_MAX_LEVEL = 10;
 const ROLE_QUEST_BASE_GEM = 3000; // fixed cost of the 2nd quest of the day, same for every role/player
+const ROLE_BONUS_DAY_BOOST = 0.25; // full +25% on Roles Day / Jack of All Trades Day
+const ROLE_NORMAL_DAYS = 5;
+const ROLE_BONUS_DAYS = 2; // every week always has exactly these 2 (Roles Day + Jack of All Trades Day)
 
 // Supplier's Cape roles vs Crafter's Cape roles, per the wiki's Trivia note.
 const SUPPLIER_ROLES = ["Farmer", "Surgeon", "Fishing", "Star Captain"];
@@ -23,7 +26,8 @@ const rolePickerToggleEl = document.getElementById("rolePickerToggle");
 const rolePickerMenuEl = document.getElementById("rolePickerMenu");
 const rolePickerIconEl = document.getElementById("rolePickerIcon");
 const rolePickerLabelEl = document.getElementById("rolePickerLabel");
-const roleQuestsPerDayEl = document.getElementById("roleQuestsPerDay");
+const roleQuestsNormalEl = document.getElementById("roleQuestsNormal");
+const roleQuestsBonusEl = document.getElementById("roleQuestsBonus");
 const roleCurrentLevelEl = document.getElementById("roleCurrentLevel");
 const roleCurrentPointsEl = document.getElementById("roleCurrentPoints");
 const roleTargetLevelEl = document.getElementById("roleTargetLevel");
@@ -35,7 +39,9 @@ const rolePointsEl = document.getElementById("rolePoints");
 const roleQuestsEl = document.getElementById("roleQuests");
 const roleDaysEl = document.getElementById("roleDays");
 const roleTableBody = document.querySelector("#roleTable tbody");
-const roleDailyGemsEl = document.getElementById("roleDailyGems");
+const roleWeeklyMathEl = document.getElementById("roleWeeklyMath");
+const roleDailyGemsNormalEl = document.getElementById("roleDailyGemsNormal");
+const roleDailyGemsBonusEl = document.getElementById("roleDailyGemsBonus");
 const roleTotalGemsEl = document.getElementById("roleTotalGems");
 const roleGemsSpentEl = document.getElementById("roleGemsSpent");
 const roleGemsPerWlEl = document.getElementById("roleGemsPerWl");
@@ -78,62 +84,98 @@ function clampFieldValue(el, min, max) {
   return clamped;
 }
 
+// weekly totals for one level's rates: 5 normal days + 2 bonus days,
+// each contributing their own quest count at their own rate — this is the
+// one formula the whole calculator is built on, shown to the user
+// literally in "This week's math" so nothing is hidden inside an opaque average
+function roleWeeklyTotals(questsNormal, questsBonus, normalRate, bonusRate) {
+  const weeklyQuests = ROLE_NORMAL_DAYS * questsNormal + ROLE_BONUS_DAYS * questsBonus;
+  const weeklyPoints = ROLE_NORMAL_DAYS * questsNormal * normalRate + ROLE_BONUS_DAYS * questsBonus * bonusRate;
+  return { weeklyQuests, weeklyPoints };
+}
+
 function roleCompute() {
   roleUpdateCapeLabel();
 
   const currentLevel = clampFieldValue(roleCurrentLevelEl, 0, 9);
   const currentPoints = clampFieldValue(roleCurrentPointsEl, 0, Number.MAX_SAFE_INTEGER);
   const targetLevel = clampFieldValue(roleTargetLevelEl, 1, ROLE_MAX_LEVEL);
-  const questsPerDay = clampFieldValue(roleQuestsPerDayEl, 0, 999999);
+  const questsNormal = clampFieldValue(roleQuestsNormalEl, 0, 999999);
+  const questsBonus = clampFieldValue(roleQuestsBonusEl, 0, 999999);
   const gearMultiplier = roleGearMultiplier();
+
+  // "This week's math" — worked example using the current level's rate
+  const curNormalRate = rolePointsPerQuestBase(currentLevel) * gearMultiplier;
+  const curBonusRate = curNormalRate * (1 + ROLE_BONUS_DAY_BOOST);
+  const curWeek = roleWeeklyTotals(questsNormal, questsBonus, curNormalRate, curBonusRate);
+  const normalPart = ROLE_NORMAL_DAYS * questsNormal * curNormalRate;
+  const bonusPart = ROLE_BONUS_DAYS * questsBonus * curBonusRate;
+  roleWeeklyMathEl.innerHTML =
+    `${ROLE_NORMAL_DAYS} normal days × ${questsNormal} quests × ${curNormalRate.toLocaleString("en-US", { maximumFractionDigits: 1 })} pts = ${normalPart.toLocaleString("en-US", { maximumFractionDigits: 0 })}<br>` +
+    `${ROLE_BONUS_DAYS} bonus days × ${questsBonus} quests × ${curBonusRate.toLocaleString("en-US", { maximumFractionDigits: 1 })} pts = ${bonusPart.toLocaleString("en-US", { maximumFractionDigits: 0 })}<br>` +
+    `<strong>Total this week: ${curWeek.weeklyPoints.toLocaleString("en-US", { maximumFractionDigits: 0 })} points from ${curWeek.weeklyQuests.toLocaleString("en-US")} quests</strong>`;
 
   roleTableBody.innerHTML = "";
   let totalPoints = 0;
   let totalQuests = 0;
+  let totalDays = 0;
   let unreachable = false;
 
   for (let level = currentLevel; level < targetLevel; level++) {
     const levelTotal = rolePointsForLevel(level);
     const alreadyEarned = level === currentLevel ? Math.min(currentPoints, levelTotal) : 0;
     const remaining = Math.max(0, levelTotal - alreadyEarned);
-    const rate = rolePointsPerQuestBase(level) * gearMultiplier;
-    const quests = remaining > 0 ? Math.ceil(remaining / rate) : 0;
-    if (remaining > 0 && questsPerDay <= 0) unreachable = true;
+
+    const normalRate = rolePointsPerQuestBase(level) * gearMultiplier;
+    const bonusRate = normalRate * (1 + ROLE_BONUS_DAY_BOOST);
+    const week = roleWeeklyTotals(questsNormal, questsBonus, normalRate, bonusRate);
+
+    let quests = 0;
+    let days = 0;
+    if (remaining > 0) {
+      if (week.weeklyQuests <= 0 || week.weeklyPoints <= 0) {
+        unreachable = true;
+      } else {
+        const avgPointsPerQuest = week.weeklyPoints / week.weeklyQuests;
+        const avgQuestsPerDay = week.weeklyQuests / 7;
+        quests = Math.ceil(remaining / avgPointsPerQuest);
+        days = Math.ceil(quests / avgQuestsPerDay);
+      }
+    }
 
     totalPoints += remaining;
     totalQuests += quests;
+    totalDays += days;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>Level ${level} → ${level + 1}</td>
-      <td>${rate.toLocaleString("en-US", { maximumFractionDigits: 1 })}</td>
+      <td>${normalRate.toLocaleString("en-US", { maximumFractionDigits: 1 })}</td>
+      <td>${bonusRate.toLocaleString("en-US", { maximumFractionDigits: 1 })}</td>
       <td>${remaining.toLocaleString("en-US")}</td>
-      <td>${quests.toLocaleString("en-US")}</td>
-      <td>${questsPerDay > 0 ? Math.ceil(quests / questsPerDay).toLocaleString("en-US") : "—"}</td>
+      <td>${unreachable ? "—" : quests.toLocaleString("en-US")}</td>
+      <td>${unreachable ? "never" : days.toLocaleString("en-US")}</td>
     `;
     roleTableBody.appendChild(tr);
   }
 
-  const totalDays = questsPerDay > 0 ? Math.ceil(totalQuests / questsPerDay) : 0;
   rolePointsEl.textContent = totalPoints.toLocaleString("en-US");
-  roleQuestsEl.textContent = totalQuests.toLocaleString("en-US");
-  roleDaysEl.textContent = unreachable ? "never (0 quests/day)" : totalDays.toLocaleString("en-US");
+  roleQuestsEl.textContent = unreachable ? "—" : totalQuests.toLocaleString("en-US");
+  roleDaysEl.textContent = unreachable ? "never (0 quests/week)" : totalDays.toLocaleString("en-US");
 
-  // gem cost: full days at questsPerDay, plus one partial day for the
-  // leftover quests on the last day
-  const dailyGemCost = roleGemCostForDay(questsPerDay);
-  roleDailyGemsEl.textContent = dailyGemCost.toLocaleString("en-US");
+  // flat weekly cost — no projection onto total quests needed, so it's a
+  // number you can verify by hand: just 5 normal days + 2 bonus days
+  const gemNormalDay = roleGemCostForDay(questsNormal);
+  const gemBonusDay = roleGemCostForDay(questsBonus);
+  const weeklyGemCost = ROLE_NORMAL_DAYS * gemNormalDay + ROLE_BONUS_DAYS * gemBonusDay;
+  roleDailyGemsNormalEl.textContent = gemNormalDay.toLocaleString("en-US");
+  roleDailyGemsBonusEl.textContent = gemBonusDay.toLocaleString("en-US");
+  roleTotalGemsEl.textContent = weeklyGemCost.toLocaleString("en-US");
+  document.getElementById("roleGemMath").textContent =
+    `(${ROLE_NORMAL_DAYS} × ${gemNormalDay.toLocaleString("en-US")}) + (${ROLE_BONUS_DAYS} × ${gemBonusDay.toLocaleString("en-US")}) = ${weeklyGemCost.toLocaleString("en-US")}`;
 
-  let totalGemCost = 0;
-  if (questsPerDay > 0) {
-    const fullDays = Math.floor(totalQuests / questsPerDay);
-    const leftoverQuests = totalQuests % questsPerDay;
-    totalGemCost = fullDays * dailyGemCost + roleGemCostForDay(leftoverQuests);
-  }
-  roleTotalGemsEl.textContent = unreachable ? "—" : totalGemCost.toLocaleString("en-US");
-
-  // Gems → WL converter always reflects this total — no separate manual entry
-  roleGemsSpentEl.value = unreachable ? 0 : totalGemCost;
+  // Gems → WL converter always reflects this weekly cost — no separate manual entry
+  roleGemsSpentEl.value = weeklyGemCost;
   roleComputeGemsToWl();
 }
 
@@ -145,7 +187,7 @@ function roleComputeGemsToWl() {
   roleGemsAsWlLocklineEl.innerHTML = formatLocks(wl);
 }
 
-[roleQuestsPerDayEl, roleCurrentLevelEl, roleCurrentPointsEl, roleTargetLevelEl,
+[roleQuestsNormalEl, roleQuestsBonusEl, roleCurrentLevelEl, roleCurrentPointsEl, roleTargetLevelEl,
  bonusCapeEl, bonusJatSetEl].forEach((el) => {
   el.addEventListener("input", roleCompute);
   el.addEventListener("change", roleCompute);
@@ -175,12 +217,12 @@ roleGemsPerWlEl.addEventListener("input", roleComputeGemsToWl);
 
 // if you tab/click away leaving a number field empty, snap it back to its
 // minimum instead of leaving it blank
-[[roleCurrentLevelEl, 0], [roleCurrentPointsEl, 0], [roleTargetLevelEl, 1], [roleQuestsPerDayEl, 0]]
-  .forEach(([el, min]) => {
-    el.addEventListener("blur", () => {
-      if (el.value === "") el.value = min;
-      roleCompute();
-    });
+[[roleCurrentLevelEl, 0], [roleCurrentPointsEl, 0], [roleTargetLevelEl, 1],
+ [roleQuestsNormalEl, 0], [roleQuestsBonusEl, 0]].forEach(([el, min]) => {
+  el.addEventListener("blur", () => {
+    if (el.value === "") el.value = min;
+    roleCompute();
   });
+});
 
 roleCompute();
