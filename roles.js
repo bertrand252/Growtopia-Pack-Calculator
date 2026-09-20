@@ -40,9 +40,13 @@ function roleBonusMultiplier() {
   let bonus = 0;
   if (bonusCapeEl.checked) bonus += 0.05;
   if (bonusJatSetEl.checked) bonus += 0.03;
-  // Roles Day and Jack of All Trades Day land on two DIFFERENT days of the
-  // week (day 1 and day 2) — they can never both hit the same day, so each
-  // is averaged in separately as its own 1/7 share, never combined into one.
+  // Of a role's 7-day week, 1 day is that role's own Roles Day and 1
+  // (different) day is Jack of All Trades Day (any role counts that day) —
+  // 2 boosted days out of 7, not every day. Since this calculator totals
+  // quests/days over a long multi-day stretch rather than simulating an
+  // actual calendar, each checked day folds in as its own 1/7 share of the
+  // week's average rate, and both can be checked at once (they're
+  // different days, but both still happen every week).
   if (bonusRolesDayEl.checked) bonus += 0.25 / 7;
   if (bonusJoatDayEl.checked) bonus += 0.25 / 7;
   return 1 + bonus;
@@ -62,8 +66,12 @@ function roleUpdateCapeLabel() {
 }
 
 // clamp a field's own displayed value, not just the number used internally,
-// so typing 456235 or a negative doesn't just get silently reinterpreted
+// so typing 456235 or a negative doesn't just get silently reinterpreted.
+// Leaves an empty field alone (returns min for the calc) instead of
+// snapping it back to min instantly — otherwise backspacing to retype a
+// new number gets stomped before you can type the replacement digit.
 function clampFieldValue(el, min, max) {
+  if (el.value === "") return min;
   const n = Math.floor(Number(el.value) || 0);
   const clamped = Math.min(max, Math.max(min, n));
   if (String(clamped) !== el.value) el.value = clamped;
@@ -116,21 +124,20 @@ function roleCompute() {
 }
 
 [roleCurrentLevelEl, roleCurrentPointsEl, roleTargetLevelEl, roleQuestsPerDayEl,
- bonusCapeEl, bonusJatSetEl].forEach((el) => {
+ bonusCapeEl, bonusJatSetEl, bonusRolesDayEl, bonusJoatDayEl].forEach((el) => {
   el.addEventListener("input", roleCompute);
   el.addEventListener("change", roleCompute);
 });
 roleTypeEl.addEventListener("change", roleCompute);
 
-// Roles Day and Jack of All Trades Day are two different days of the week —
-// can never both be "today", so checking one always clears the other.
-bonusRolesDayEl.addEventListener("change", () => {
-  if (bonusRolesDayEl.checked) bonusJoatDayEl.checked = false;
-  roleCompute();
-});
-bonusJoatDayEl.addEventListener("change", () => {
-  if (bonusJoatDayEl.checked) bonusRolesDayEl.checked = false;
-  roleCompute();
-});
+// if you tab/click away leaving a number field empty, snap it back to its
+// minimum instead of leaving it blank
+[[roleCurrentLevelEl, 0], [roleCurrentPointsEl, 0], [roleTargetLevelEl, 1], [roleQuestsPerDayEl, 1]]
+  .forEach(([el, min]) => {
+    el.addEventListener("blur", () => {
+      if (el.value === "") el.value = min;
+      roleCompute();
+    });
+  });
 
 roleCompute();
