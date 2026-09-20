@@ -32,7 +32,7 @@ const rolePointsEl = document.getElementById("rolePoints");
 const roleQuestsEl = document.getElementById("roleQuests");
 const roleDaysEl = document.getElementById("roleDays");
 const roleTableBody = document.querySelector("#roleTable tbody");
-const roleGemBaseEl = document.getElementById("roleGemBase");
+const ROLE_QUEST_BASE_GEM = 3000; // fixed cost of the 2nd quest of the day, same for every role/player
 const roleDailyGemsEl = document.getElementById("roleDailyGems");
 const roleTotalGemsEl = document.getElementById("roleTotalGems");
 
@@ -48,11 +48,11 @@ function roleBonusMultiplier() {
   return 1 + bonus;
 }
 
-// quest 1 of the day is free; quest k after that costs (k-1)^2 times
-// what the 2nd quest costs (confirmed on the wiki's Formula section)
-function roleGemCostForQuest(questNumber, secondQuestCost) {
+// quest 1 of the day is free; quest k after that costs 3000*(k-1)^2 gems,
+// a fixed formula confirmed on the wiki's Formula section
+function roleGemCostForQuest(questNumber) {
   if (questNumber <= 1) return 0;
-  return secondQuestCost * (questNumber - 1) * (questNumber - 1);
+  return ROLE_QUEST_BASE_GEM * (questNumber - 1) * (questNumber - 1);
 }
 
 function roleUpdateCapeLabel() {
@@ -109,15 +109,14 @@ function roleCompute() {
   roleQuestsEl.textContent = totalQuests.toLocaleString("en-US");
   roleDaysEl.textContent = totalDays.toLocaleString("en-US");
 
-  const secondQuestCost = clampFieldValue(roleGemBaseEl, 0, Number.MAX_SAFE_INTEGER);
   let dailyGems = 0;
-  for (let q = 1; q <= questsPerDay; q++) dailyGems += roleGemCostForQuest(q, secondQuestCost);
+  for (let q = 1; q <= questsPerDay; q++) dailyGems += roleGemCostForQuest(q);
   roleDailyGemsEl.textContent = dailyGems.toLocaleString("en-US");
   roleTotalGemsEl.textContent = (dailyGems * totalDays).toLocaleString("en-US");
 }
 
 [roleCurrentLevelEl, roleCurrentPointsEl, roleTargetLevelEl, roleQuestsPerDayEl,
- bonusCapeEl, bonusJatSetEl, roleGemBaseEl].forEach((el) => {
+ bonusCapeEl, bonusJatSetEl].forEach((el) => {
   el.addEventListener("input", roleCompute);
   el.addEventListener("change", roleCompute);
 });
