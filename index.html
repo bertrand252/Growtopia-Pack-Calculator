@@ -25,6 +25,14 @@
       <img class="nav-icon" src="assets/tools/nanoforge.png" alt="" />
       <span>Nanoforge</span>
     </button>
+    <button class="nav-item" data-tool="surgery">
+      <img class="nav-icon" src="assets/items/stitches.png" alt="" />
+      <span>Surgery Calculator</span>
+    </button>
+    <button class="nav-item" data-tool="roles">
+      <img class="nav-icon" src="assets/tools/roles.png" alt="" />
+      <span>Roles</span>
+    </button>
     <div class="sidebar-footer">
       <button id="themeToggle" class="theme-toggle" title="Toggle theme">🌙</button>
     </div>
@@ -197,12 +205,175 @@
       </div>
     </section>
 
+    <section class="tool-view" id="tool-surgery" hidden>
+      <header>
+        <div>
+          <h1>Doctor Surgery Calculator</h1>
+          <p>Estimate how many of each Surgical Tool you'll burn through completing a number of operations, based on average per-operation usage.</p>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label>Operations to complete</label>
+            <input type="number" id="surgOps" min="0" value="200" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;">Estimated tools needed</h3>
+        <p class="card-subtitle">Average per-operation rates, sourced from GrowClass's Doctor Surgery Calculator — real usage varies per operation</p>
+        <div class="table-wrap">
+          <table class="tool-table" id="surgTable">
+            <thead><tr><th></th><th>Tool</th><th>Avg / operation</th><th>Estimated qty</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool-view" id="tool-roles" hidden>
+      <header>
+        <div>
+          <h1>Roles Calculator</h1>
+          <p>Figure out how many quests and days it takes to level up a Role, including gear and weekly-event bonuses.</p>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label>Role</label>
+            <select id="roleType">
+              <option value="Farmer">Farmer (Supplier)</option>
+              <option value="Surgeon">Surgeon (Supplier)</option>
+              <option value="Fishing">Fishing (Supplier)</option>
+              <option value="Star Captain">Star Captain (Supplier)</option>
+              <option value="Builder">Builder (Crafter)</option>
+              <option value="Chef">Chef (Crafter)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Quests per day</label>
+            <input type="number" id="roleQuestsPerDay" min="1" value="1" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:14px;">
+          <div class="field">
+            <label>Current level (0-9)</label>
+            <input type="number" id="roleCurrentLevel" min="0" max="9" value="0" />
+          </div>
+          <div class="field">
+            <label>Points already earned at current level</label>
+            <input type="number" id="roleCurrentPoints" min="0" value="0" />
+          </div>
+          <div class="field">
+            <label>Target level (1-10)</label>
+            <input type="number" id="roleTargetLevel" min="1" max="10" value="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;">Bonuses</h3>
+        <p class="card-subtitle">Per growtopiawiki.com/wiki/Update:Role_Up! — stack any that apply, they add to your effective points per quest</p>
+        <div class="bonus-grid">
+          <label class="bonus-card" id="bonusCapeCard">
+            <input type="checkbox" id="bonusCape" />
+            <img class="bonus-icon" id="bonusCapeIcon" src="assets/roles/supplier-cape.png" alt="" />
+            <div>
+              <div class="bonus-name" id="bonusCapeLabel">Supplier's Cape</div>
+              <div class="bonus-value">+5% Points</div>
+            </div>
+          </label>
+          <label class="bonus-card">
+            <input type="checkbox" id="bonusJatSet" />
+            <img class="bonus-icon" src="assets/roles/jacks-set.png" alt="" />
+            <div>
+              <div class="bonus-name">Jack's Set</div>
+              <div class="bonus-value">+3% Points</div>
+            </div>
+          </label>
+        </div>
+
+        <h3 style="margin:16px 0 4px;">Weekly bonus days</h3>
+        <p class="card-subtitle">Two separate days, never the same day — each hits once every 7 days, so its boost is averaged in as 1/7 of the week. Exact % isn't wiki-confirmed.</p>
+        <div class="bonus-grid">
+          <label class="bonus-card">
+            <input type="checkbox" id="bonusRolesDay" />
+            <img class="bonus-icon" src="assets/roles/growtoken.png" alt="" />
+            <div>
+              <div class="bonus-name">Roles Day</div>
+              <div class="bonus-value">+25% Points (day 1 of week)</div>
+            </div>
+          </label>
+          <label class="bonus-card">
+            <input type="checkbox" id="bonusJoatDay" />
+            <img class="bonus-icon" src="assets/roles/joat.png" alt="" />
+            <div>
+              <div class="bonus-name">Jack of All Trades Day</div>
+              <div class="bonus-value">+25% Points (day 2 of week)</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="card summary">
+        <div class="sum-box">
+          <div class="label">Total points needed</div>
+          <div class="value" id="rolePoints">0</div>
+        </div>
+        <div class="sum-box">
+          <div class="label">Total quests needed</div>
+          <div class="value" id="roleQuests">0</div>
+        </div>
+        <div class="sum-box profit">
+          <div class="label">Total days required</div>
+          <div class="value pos" id="roleDays">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;">Level breakdown</h3>
+        <p class="card-subtitle">Points/quest and quests needed assume the bonuses above apply the whole way. Points curve isn't wiki-confirmed — treat as an estimate.</p>
+        <div class="table-wrap">
+          <table class="tool-table" id="roleTable">
+            <thead><tr><th>Level</th><th>Points/quest</th><th>Points for this level</th><th>Quests</th><th>Days</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;">Quest gem cost</h3>
+        <p class="card-subtitle">Wiki-confirmed formula: each day, quest 1 is free, and quest k afterward costs (k-1)² × the 2nd quest's price. Enter what your 2nd quest of the day costs.</p>
+        <div class="field" style="max-width:260px;">
+          <label>Gems for your 2nd quest of the day</label>
+          <input type="number" id="roleGemBase" min="0" value="0" />
+        </div>
+        <div class="card summary" style="margin:14px 0 0;">
+          <div class="sum-box">
+            <div class="label">Daily gem cost</div>
+            <div class="value" id="roleDailyGems">0</div>
+          </div>
+          <div class="sum-box">
+            <div class="label">Total gem cost</div>
+            <div class="value" id="roleTotalGems">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
 <script src="script.js"></script>
 <script src="autoclave.js"></script>
 <script src="nanoforge.js"></script>
+<script src="surgery.js"></script>
+<script src="roles.js"></script>
 <script src="nav.js"></script>
 </body>
 </html>
