@@ -82,6 +82,8 @@
         <div id="cardCategories"></div>
       </div>
 
+      <div id="cardCheckStatusBottom" class="card-check-banner" hidden></div>
+
       <div class="card summary">
         <div class="sum-box">
           <div class="label">Total capital</div>
@@ -246,18 +248,43 @@
         <div class="row">
           <div class="field">
             <label>Role</label>
-            <select id="roleType">
-              <option value="Farmer">Farmer (Supplier)</option>
-              <option value="Surgeon">Surgeon (Supplier)</option>
-              <option value="Fishing">Fishing (Supplier)</option>
-              <option value="Star Captain">Star Captain (Supplier)</option>
-              <option value="Builder">Builder (Crafter)</option>
-              <option value="Chef">Chef (Crafter)</option>
-            </select>
+            <div class="role-picker" id="rolePicker">
+              <button type="button" class="role-picker-toggle" id="rolePickerToggle">
+                <img class="role-picker-icon" id="rolePickerIcon" src="assets/roles/role_farmer.png" alt="" />
+                <span id="rolePickerLabel">Farmer (Supplier)</span>
+                <span class="role-picker-arrow">▾</span>
+              </button>
+              <div class="role-picker-menu" id="rolePickerMenu" hidden>
+                <button type="button" class="role-picker-item active" data-value="Farmer" data-label="Farmer (Supplier)">
+                  <img class="role-picker-icon" src="assets/roles/role_farmer.png" alt="" /><span>Farmer</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="Builder" data-label="Builder (Crafter)">
+                  <img class="role-picker-icon" src="assets/roles/role_builder.png" alt="" /><span>Builder</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="Surgeon" data-label="Surgeon (Supplier)">
+                  <img class="role-picker-icon" src="assets/roles/role_surgeon.png" alt="" /><span>Surgeon</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="Fishing" data-label="Fishing (Supplier)">
+                  <img class="role-picker-icon" src="assets/roles/role_fishing.png" alt="" /><span>Fishing</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="Chef" data-label="Chef (Crafter)">
+                  <img class="role-picker-icon" src="assets/roles/role_chef.png" alt="" /><span>Chef</span><span class="role-picker-radio"></span>
+                </button>
+                <button type="button" class="role-picker-item" data-value="Star Captain" data-label="Star Captain (Supplier)">
+                  <img class="role-picker-icon" src="assets/roles/role_starcaptain.png" alt="" /><span>Star Captain</span><span class="role-picker-radio"></span>
+                </button>
+              </div>
+            </div>
+            <input type="hidden" id="roleType" value="Farmer" />
           </div>
           <div class="field">
-            <label>Quests per day</label>
-            <input type="number" id="roleQuestsPerDay" min="1" value="1" />
+            <label>Quests on normal days</label>
+            <input type="number" id="roleQuestsNormal" min="0" value="2" />
+          </div>
+          <div class="field">
+            <label>Quests on a bonus day</label>
+            <input type="number" id="roleQuestsBonus" min="0" value="10" />
+            <div class="lockline">Only counts on Roles Day / Jack of All Trades Day, if checked below</div>
           </div>
         </div>
         <div class="row" style="margin-top:14px;">
@@ -299,14 +326,14 @@
         </div>
 
         <h3 style="margin:16px 0 4px;">Weekly bonus days</h3>
-        <p class="card-subtitle">Every 7-day week has 1 Roles Day (this role's own turn) and 1 (different) Jack of All Trades Day (any role counts) — 2 boosted days out of 7. Check both if you play regularly; each folds in as its own 1/7 share of the average rate below. Exact % isn't wiki-confirmed.</p>
+        <p class="card-subtitle">Every 7-day week has 1 Roles Day (this role's own turn) and 1 different Jack of All Trades Day (any role counts) — 2 boosted days out of 7, never the same day. Check the ones you plan to actually farm on; each gives a full +25% on that day's quests (using the "Quests on a bonus day" count above), while the other 5-6 days use your normal quest count instead.</p>
         <div class="bonus-grid">
           <label class="bonus-card">
             <input type="checkbox" id="bonusRolesDay" />
             <img class="bonus-icon" src="assets/roles/growtoken.png" alt="" />
             <div>
               <div class="bonus-name">Roles Day</div>
-              <div class="bonus-value">+25% Points (day 1 of week)</div>
+              <div class="bonus-value">+25% Points that day</div>
             </div>
           </label>
           <label class="bonus-card">
@@ -314,7 +341,7 @@
             <img class="bonus-icon" src="assets/roles/joat.png" alt="" />
             <div>
               <div class="bonus-name">Jack of All Trades Day</div>
-              <div class="bonus-value">+25% Points (day 2 of week)</div>
+              <div class="bonus-value">+25% Points that day</div>
             </div>
           </label>
         </div>
@@ -337,26 +364,53 @@
 
       <div class="card">
         <h3 style="margin:0 0 4px;">Level breakdown</h3>
-        <p class="card-subtitle">Points/quest and quests needed assume the bonuses above apply the whole way. Points curve isn't wiki-confirmed — treat as an estimate.</p>
+        <p class="card-subtitle">Points/quest for a normal day vs. a bonus day (Roles Day/JOAT Day), averaged across the week based on how many bonus days you checked</p>
         <div class="table-wrap">
           <table class="tool-table" id="roleTable">
-            <thead><tr><th>Level</th><th>Points/quest</th><th>Points for this level</th><th>Quests</th><th>Days</th></tr></thead>
+            <thead><tr><th>Level</th><th>Pts/quest (normal)</th><th>Pts/quest (bonus)</th><th>Points for this level</th><th>Quests</th><th>Days</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
       </div>
 
       <div class="card">
-        <h3 style="margin:0 0 4px;">Quest gem cost</h3>
+        <h3 style="margin:0 0 4px;"><img class="inline-icon" src="assets/roles/gems.png" alt="" /> Quest gem cost</h3>
         <p class="card-subtitle">Each day, quest 1 is free. Quest k after that costs 3,000 × (k-1)² gems — fixed, same for every role and every player.</p>
         <div class="card summary" style="margin:14px 0 0;">
           <div class="sum-box">
-            <div class="label">Daily gem cost</div>
-            <div class="value" id="roleDailyGems">0</div>
+            <div class="label">Gem cost, normal day</div>
+            <div class="value" id="roleDailyGemsNormal">0</div>
           </div>
           <div class="sum-box">
+            <div class="label">Gem cost, bonus day</div>
+            <div class="value" id="roleDailyGemsBonus">0</div>
+          </div>
+          <div class="sum-box profit">
             <div class="label">Total gem cost</div>
-            <div class="value" id="roleTotalGems">0</div>
+            <div class="value pos" id="roleTotalGems">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px;"><img class="inline-icon" src="assets/roles/gems.png" alt="" /> Gems → WL converter</h3>
+        <p class="card-subtitle">Turn a gem cost into WL using today's exchange rate, so you can see it in the same currency as the rest of this app</p>
+        <div class="row">
+          <div class="field">
+            <label>Gems spent</label>
+            <input type="number" id="roleGemsSpent" min="0" value="0" />
+          </div>
+          <div class="field">
+            <label>Gems per 1 WL (current rate)</label>
+            <input type="number" id="roleGemsPerWl" min="0" value="0" />
+          </div>
+        </div>
+        <button id="roleUseTotalGems" class="addbtn" style="margin-top:10px;width:100%;">Use total gem cost above</button>
+        <div class="card summary" style="margin:14px 0 0;">
+          <div class="sum-box profit">
+            <div class="label">= WL</div>
+            <div class="value pos" id="roleGemsAsWl">0 WL</div>
+            <div class="lockline" id="roleGemsAsWlLockline"></div>
           </div>
         </div>
       </div>

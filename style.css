@@ -101,6 +101,9 @@ header p{margin:2px 0 0;color:var(--muted);font-size:13px;}
 .card-check{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;flex-shrink:0;}
 .card-check.ok{color:#0b8f6b;background:rgba(11,143,107,.12);}
 .card-check.bad{color:var(--danger);background:rgba(229,72,77,.12);}
+.card-check-banner{padding:10px 16px;border-radius:10px;margin-bottom:18px;font-size:13px;font-weight:700;}
+.card-check-banner.ok{color:#0b8f6b;background:rgba(11,143,107,.12);border:1px solid rgba(11,143,107,.3);}
+.card-check-banner.bad{color:var(--danger);background:rgba(229,72,77,.12);border:1px solid rgba(229,72,77,.3);}
 
 .section{margin-bottom:24px;}
 .section:last-child{margin-bottom:0;}
@@ -121,6 +124,22 @@ header p{margin:2px 0 0;color:var(--muted);font-size:13px;}
 .sum-box.profit .value.neg{color:var(--danger);}
 
 footer{text-align:center;color:var(--muted);font-size:12px;margin-top:30px;}
+
+.inline-icon{width:18px;height:18px;object-fit:contain;vertical-align:-3px;margin-right:2px;}
+
+.role-picker{position:relative;}
+.role-picker-toggle{display:flex;align-items:center;gap:8px;width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-size:14px;cursor:pointer;text-align:left;}
+.role-picker-toggle span:first-of-type{flex:1;}
+.role-picker-arrow{color:var(--muted);font-size:11px;}
+.role-picker-icon{width:24px;height:24px;object-fit:contain;flex-shrink:0;image-rendering:pixelated;}
+.role-picker-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:10;background:var(--panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(20,30,60,.15);overflow:hidden;}
+.role-picker-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;background:none;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-align:left;border-bottom:1px solid var(--border);}
+.role-picker-item:last-child{border-bottom:none;}
+.role-picker-item:hover{background:var(--panel2);}
+.role-picker-item span:nth-child(2){flex:1;}
+.role-picker-radio{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;}
+.role-picker-item.active .role-picker-radio{border-color:#0b8f6b;background:radial-gradient(#0b8f6b 40%,transparent 44%);}
+.role-picker-item.active{background:rgba(11,143,107,.08);}
 
 .bonus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
 .bonus-card{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;}

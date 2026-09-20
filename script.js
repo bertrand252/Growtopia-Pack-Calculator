@@ -176,10 +176,14 @@ function renderCardRows() {
             <input type="number" min="0" class="card-rate-n" data-card="${card.name}" value="${rate.n}" />
             <span class="unit">${rightUnit}</span>
           </div>
-          <label class="switch">
-            <input type="checkbox" class="card-rate-mode" data-card="${card.name}" ${isWlMode ? "checked" : ""} />
-            <span class="slider"></span>
-          </label>
+          <div class="switchwrap">
+            <span class="${!isWlMode ? "active" : ""}">item/wl</span>
+            <label class="switch">
+              <input type="checkbox" class="card-rate-mode" data-card="${card.name}" ${isWlMode ? "checked" : ""} />
+              <span class="slider"></span>
+            </label>
+            <span class="${isWlMode ? "active" : ""}">wl/item</span>
+          </div>
         </div>
       `;
       grid.appendChild(el);
@@ -205,9 +209,13 @@ function renderCardRows() {
     inp.addEventListener("change", (e) => {
       const isWlMode = e.target.checked;
       cardRate[e.target.dataset.card].mode = isWlMode ? "wl_per_item" : "item_per_wl";
-      const units = e.target.closest(".item-body").querySelectorAll(".unit");
+      const body = e.target.closest(".item-body");
+      const units = body.querySelectorAll(".unit");
       units[0].textContent = `1 ${isWlMode ? "item" : "wl"} =`;
       units[1].textContent = isWlMode ? "wl" : "item";
+      const labels = body.querySelectorAll(".switchwrap span");
+      labels[0].classList.toggle("active", !isWlMode);
+      labels[1].classList.toggle("active", isWlMode);
       compute();
     });
   });
@@ -218,14 +226,27 @@ function renderCardRows() {
 function updateCardCheckStatus() {
   const total = Object.values(cardQty).reduce((sum, q) => sum + (Number(q) || 0), 0);
   const target = PACKS.crime.cardsPerPack;
-  cardCheckStatus.textContent = total === target ? `✓ ${total}/${target} cards` : `⚠ ${total}/${target} cards — recheck`;
-  cardCheckStatus.className = "card-check " + (total === target ? "ok" : "bad");
+  const ok = total === target;
+  cardCheckStatus.textContent = ok ? `✓ ${total}/${target} cards` : `⚠ ${total}/${target} cards — recheck`;
+  cardCheckStatus.className = "card-check " + (ok ? "ok" : "bad");
+
+  const bottomEl = document.getElementById("cardCheckStatusBottom");
+  if (activePack === "crime") {
+    bottomEl.hidden = false;
+    bottomEl.textContent = ok
+      ? `✓ Card count checks out: ${total}/${target} — totals below are based on this`
+      : `⚠ Card count is ${total}/${target}, not ${target} — fix the card quantities above before trusting the totals below`;
+    bottomEl.className = "card-check-banner " + (ok ? "ok" : "bad");
+  } else {
+    bottomEl.hidden = true;
+  }
 }
 
 function renderGrid() {
   const pack = PACKS[activePack];
   cardDeckSection.hidden = activePack !== "crime";
   if (activePack === "crime") renderCardRows();
+  else document.getElementById("cardCheckStatusBottom").hidden = true;
   gridEl.innerHTML = "";
   pack.items.forEach((item, idx) => {
     const el = document.createElement("div");
@@ -325,9 +346,10 @@ function compute() {
   if (activePack === "crime") {
     Object.values(CARD_CATALOG).flat().forEach((card) => {
       const totalQty = (Number(cardQty[card.name]) || 0) * qtyPack;
-      totalRevenue += totalQty * pricePerItem(cardRate[card.name]);
+      const cardRevenue = totalQty * pricePerItem(cardRate[card.name]);
+      totalRevenue += cardRevenue;
       const totalEl = cardCategoriesEl.querySelector(`[data-card-total="${card.name}"]`);
-      if (totalEl) totalEl.textContent = `${totalQty.toLocaleString("en-US")} total`;
+      if (totalEl) totalEl.textContent = `${totalQty.toLocaleString("en-US")} total (worth ${cardRevenue.toLocaleString("en-US")} WL)`;
     });
   }
 
