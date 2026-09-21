@@ -372,8 +372,8 @@ function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   themeBtn.textContent = theme === "dark" ? "☀️" : "🌙";
 }
-let savedTheme = "light";
-try { savedTheme = localStorage.getItem("gt-theme") || "light"; } catch (e) {}
+let savedTheme = "dark";
+try { savedTheme = localStorage.getItem("gt-theme") || "dark"; } catch (e) {}
 applyTheme(savedTheme);
 themeBtn.addEventListener("click", () => {
   const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
